@@ -11,7 +11,41 @@ import (
 const SO_ORIGINAL_DST = 80
 var connection_count uint
 
-//TODO: A connection-state holding struct will be nice :)
+type TCPPipe struct {
+    id uint
+    original_destination_ip [16]byte
+    connection net.TCPConn
+}
+
+func (t *TCPPipe) Id() uint {
+    return t.id
+}
+
+func (t *TCPPipe) Close() {
+    t.connection.Close()
+}
+
+func (t *TCPPipe) Read(buffer []byte) (n int, err error) {
+    return t.connection.Read(buffer)
+}
+
+func newTCPPipe(id uint, conn net.TCPConn) TCPPipe {
+    f, err := conn.File()
+    if err != nil {
+        log.Printf("[ERR] Failed to read connection file descriptor")
+    }
+    fd := f.Fd()
+    log.Printf("[DEBUG] FD: %v\n", fd)
+    //TODO: Investigate this more. This seems arbitrary. If a linux machine: syscall.SOL_IP
+    original,err := syscall.GetsockoptIPv6Mreq(int(fd), syscall.IPPROTO_IP, SO_ORIGINAL_DST)
+    log.Printf("[DEBUG] ORIGINAL %v\n", original.Multiaddr)
+    tcppipe := TCPPipe{id : id, connection: conn, original_destination_ip: original.Multiaddr}
+    if err != nil {
+        log.Println("[ERR] Getting sockoption failed.")
+        log.Println(err)
+    }
+    return tcppipe
+}
 
 func main(){
     addr, _ := net.ResolveTCPAddr("tcp", "0.0.0.0:6666")
@@ -31,31 +65,19 @@ func main(){
             log.Println("[ERR] Error reading from connection. Moving along.")
             continue
         }
+        tcppipe := newTCPPipe(connection_count, *conn)
         log.Printf("[INFO] TCP Connection %v accepted!\n", connection_count)
-        go connectionHandler(*conn, connection_count)
+        go tcpConnectionHandler(tcppipe)
         connection_count++
     }
 }
 
-func connectionHandler(conn net.TCPConn, id uint) {
-    defer log.Printf("[INFO] Connection %v closed!\n", id)
-    defer conn.Close()
-    f, err := conn.File()
-    if err != nil {
-        log.Printf("[ERR] Failed to read connection file descriptor")
-    }
-    fd := f.Fd()
-    log.Printf("[DEBUG] FD: %v\n", fd)
-    //TODO: Investigate this more. This seems arbitrary. If a linux machine: syscall.SOL_IP
-    original,err := syscall.GetsockoptIPv6Mreq(int(fd), syscall.IPPROTO_IP, SO_ORIGINAL_DST)
-    if err != nil {
-        log.Println("[ERR] Getting sockoption failed.")
-        log.Println(err)
-    }
-    log.Printf("[DEBUG] Original %v\n", original)
+func tcpConnectionHandler(tcppipe TCPPipe) {
+    defer log.Printf("[INFO] Connection %v closed!\n", tcppipe.Id())
+    defer tcppipe.Close()
     buffer := make([]byte, 65535)
     for {
-        n, err := conn.Read(buffer)
+        n, err := tcppipe.Read(buffer)
         if err != nil {
             break
         }
