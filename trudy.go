@@ -109,26 +109,26 @@ func tcpConnectionHandler(tcppipe TCPPipe) {
     buffer := make([]byte, 65535)
     //TODO: A connection should run data through at most 2 functions. A filter (for packets that don't meet some criteria), and a modifier.
     for {
-        n, err := tcppipe.ReadSource(buffer)
+        bytesReadFromSource, err := tcppipe.ReadSource(buffer)
         if err != nil {
             break
         }
-        if filter(buffer) {
-            buffer = mangle(buffer)
-        }
-        n, err = tcppipe.WriteDestination(buffer)
+        //if filter(buffer[:bytesReadFromSource]) {
+        //    buffer = mangle(buffer[:bytesReadFromSource])
+        //}
+        _, err = tcppipe.WriteDestination(buffer[:bytesReadFromSource])
         if err != nil {
             log.Println("[ERR] Unable to send data to destination. Error: ")
             log.Printf("\t%v\n", err)
         }
         //TODO: This loop should be more sophisticated. Src/Dst Read/Write should be concurrent.
-        log.Printf("[DEBUG] Packet send bytes\n%v", hex.Dump(buffer[:n]))
-        n, err = tcppipe.ReadDestination(buffer)
+        log.Printf("[DEBUG] Packet send bytes\n%v", hex.Dump(buffer[:bytesReadFromSource]))
+        bytesReadFromDestination, err := tcppipe.ReadDestination(buffer)
         if err != nil {
             log.Printf("[ERR] Unable to read data from destination. Bailing")
             break
         }
-        log.Printf("[DEBUG] Packet recieve bytes\n%v", hex.Dump(buffer[:n]))
+        log.Printf("[DEBUG] Packet recieve bytes\n%v", hex.Dump(buffer[:bytesReadFromDestination]))
     }
 }
 
