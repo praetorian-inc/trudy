@@ -12,9 +12,8 @@ var connection_count uint
 
 type TCPPipe struct {
     id uint
-    //TODO: destination_ip is a temporary struct. Using connections is all that is necessary.
-    destination_ip [16]byte
-    destination net.TCPConn
+    destination net.Conn
+    //TODO: Specifying TCPConn was arbitrary. Replace with just net.Conn struct.
     source net.TCPConn
 }
 
@@ -43,21 +42,33 @@ func (t *TCPPipe) WriteDestination(buffer []byte) (n int, err error) {
     return t.destination.Write(buffer)
 }
 
-func newTCPPipe(id uint, conn net.TCPConn) TCPPipe {
-    f, err := conn.File()
+func ByteToConnString(multiaddr [16]byte) string {
+    ip := multiaddr[4:8]
+    ip_string := net.IPv4(ip[0], ip[1], ip[2], ip[3]).String()
+    port := multiaddr[2:4]
+    port_string := string((port[0] << 8) + port[1])
+    return (ip_string + ":" + port_string)
+}
+
+//TODO: Effective Go would suggest removing the "new" and just naming this function TCPPipe.
+func newTCPPipe(id uint, sourceConn net.TCPConn) TCPPipe {
+    f, err := sourceConn.File()
     if err != nil {
         log.Printf("[ERR] Failed to read connection file descriptor")
     }
     //TODO: Investigate this more. This seems arbitrary. If a linux machine: syscall.SOL_IP
-    original_destination,err := syscall.GetsockoptIPv6Mreq(int(f.Fd()), syscall.IPPROTO_IP, SO_ORIGINAL_DST)
+    originalAddrBytes,err := syscall.GetsockoptIPv6Mreq(int(f.Fd()), syscall.IPPROTO_IP, SO_ORIGINAL_DST)
     if err != nil {
         log.Println("[ERR] Getsockopt failed. Error below:")
         log.Printf("\t%v\n",err)
     }
 
-    //TODO: Construct the destination end of the pipe here too.
-    tcppipe := TCPPipe{id : id, source: conn, destination_ip: original_destination.Multiaddr}
-
+    destConn,err := net.Dial("tcp", ByteToConnString(originalAddrBytes.Multiaddr))
+    if err != nil {
+        log.Printf("[ERR] Unable to connect to destination. Closing connection %v.\n", id)
+        //TODO: Close connection. Also, this function should return an err value.
+    }
+    tcppipe := TCPPipe{id : id, source: sourceConn, destination: destConn}
     return tcppipe
 }
 
