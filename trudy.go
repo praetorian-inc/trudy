@@ -5,6 +5,7 @@ import (
     "log"
     "encoding/hex"
     "syscall"
+    "strconv"
 )
 
 const SO_ORIGINAL_DST = 80
@@ -46,8 +47,12 @@ func ByteToConnString(multiaddr [16]byte) string {
     ip := multiaddr[4:8]
     ip_string := net.IPv4(ip[0], ip[1], ip[2], ip[3]).String()
     port := multiaddr[2:4]
-    port_string := string((port[0] << 8) + port[1])
-    return (ip_string + ":" + port_string)
+    port_uint := int64((uint32(port[0]) << 8) + uint32(port[1]))
+    port_string := strconv.FormatInt(port_uint,10)
+    log.Printf("[DEBUG] PORT STRING: %v\n", port_string)
+    concat := ip_string + ":" + port_string
+    log.Printf("[DEBUG] Connection to destination: %v\n", concat)
+    return concat
 }
 
 //TODO: Effective Go would suggest removing the "new" and just naming this function TCPPipe.
@@ -111,7 +116,19 @@ func tcpConnectionHandler(tcppipe TCPPipe) {
         if filter(buffer) {
             buffer = mangle(buffer)
         }
-        log.Printf("[DEBUG] Packet bytes\n%v", hex.Dump(buffer[:n]))
+        n, err = tcppipe.WriteDestination(buffer)
+        if err != nil {
+            log.Println("[ERR] Unable to send data to destination. Error: ")
+            log.Printf("\t%v\n", err)
+        }
+        //TODO: This loop should be more sophisticated. Src/Dst Read/Write should be concurrent.
+        log.Printf("[DEBUG] Packet send bytes\n%v", hex.Dump(buffer[:n]))
+        n, err = tcppipe.ReadDestination(buffer)
+        if err != nil {
+            log.Printf("[ERR] Unable to read data from destination. Bailing")
+            break
+        }
+        log.Printf("[DEBUG] Packet recieve bytes\n%v", hex.Dump(buffer[:n]))
     }
 }
 
