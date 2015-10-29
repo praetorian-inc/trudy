@@ -4,6 +4,7 @@ import (
     "net"
     "log"
     "github.com/kelbyludwig/trudy/pipe"
+    "github.com/kelbyludwig/trudy/module"
 )
 
 var connection_count uint
@@ -47,16 +48,23 @@ func clientHandler(tcppipe pipe.TCPPipe) {
 
     //TODO: Timeouts!
     for {
-        bytesReadFromSource,err := tcppipe.ReadSource(buffer)
+        bytesRead,err := tcppipe.ReadSource(buffer)
         if err != nil {
             continue
         }
 
-        //if filter(buffer[:bytesReadFromSource]) {
-        //    buffer = mangle(buffer[:bytesReadFromSource])
-        //}
+        if module.Drop(buffer[:bytesRead]){
+            continue
+        }
 
-        _, err = tcppipe.WriteDestination(buffer[:bytesReadFromSource])
+        if !module.Pass(buffer[:bytesRead]) {
+            //TODO: This won't work when Mangle returns a different sized buffer.
+            buffer = module.Mangle(buffer)
+        }
+
+        log.Println(module.PrettyPrint(buffer))
+
+        _, err = tcppipe.WriteDestination(buffer[:bytesRead])
         if err != nil {
             continue
         }
@@ -79,16 +87,4 @@ func serverHandler(tcppipe pipe.TCPPipe) {
             continue
         }
     }
-}
-
-func pass(input []byte) bool {
-    return true
-}
-
-func mangle(input []byte) []byte {
-    return input
-}
-
-func drop(input []byte) bool {
-    return false
 }

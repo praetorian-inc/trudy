@@ -22,6 +22,10 @@ A transparent proxy that can modify and drop traffic for arbitrary TCP connectio
     
     `go install`
 
-2. Run trudy as root. This starts the listener.
+2. Run the Trudy binary as root. This starts the listener.
 
 3. Setup your host machine to use the virtual machine as its router. You should see connections being made in Trudy's console but not notice any traffic issues on the host.
+
+###TODO
+* Make application-layer modules.
+* Signing SSL/TLS traffic with a Trudy certficate.
