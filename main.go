@@ -49,7 +49,6 @@ func clientHandler(tcppipe pipe.TCPPipe) {
     for {
         bytesReadFromSource,err := tcppipe.ReadSource(buffer)
         if err != nil {
-            log.Println("[ERR] Unable to read data from source.")
             continue
         }
 
@@ -59,7 +58,6 @@ func clientHandler(tcppipe pipe.TCPPipe) {
 
         _, err = tcppipe.WriteDestination(buffer[:bytesReadFromSource])
         if err != nil {
-            log.Println("[ERR] Unable to send data to destination.")
             continue
         }
     }
@@ -72,14 +70,12 @@ func serverHandler(tcppipe pipe.TCPPipe) {
 
     //TODO: Timeouts!
     for {
-        bytesReadFromDestination,err := tcppipe.ReadDestination(buffer) 
+        bytesReadFromDestination,err := tcppipe.ReadDestination(buffer)
         if err != nil {
-            log.Println("[ERR] Unable to read from destination.")
             continue
         }
         _,err = tcppipe.WriteSource(buffer[:bytesReadFromDestination])
         if err != nil {
-            log.Println("[ERR] Unable to write to source.")
             continue
         }
     }
