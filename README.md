@@ -29,3 +29,6 @@ A transparent proxy that can modify and drop traffic for arbitrary TCP connectio
 ###TODO
 * Make application-layer modules.
 * Signing SSL/TLS traffic with a Trudy certficate.
+* Implement a UDP pipe as well.
+* Instead of PrettyPrint, define serialize and deserialize. This could allow plug and play for other interfaces.
+* Ncurses intercept modification.

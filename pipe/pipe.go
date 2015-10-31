@@ -62,7 +62,7 @@ func NewTCPPipe(id uint, sourceConn net.TCPConn) (pipe TCPPipe, err error) {
         sourceConn.Close()
         return *tcppipe, err
     }
-    //TODO: Investigate this more. This seems arbitrary. If a linux machine: syscall.SOL_IP
+    //TODO: Make the second argument system-dependent. E.g. If a linux machine: syscall.SOL_IP
     originalAddrBytes,err := syscall.GetsockoptIPv6Mreq(int(f.Fd()), syscall.IPPROTO_IP, SO_ORIGINAL_DST)
     if err != nil {
         log.Println("[DEBUG] Getsockopt failed.")
