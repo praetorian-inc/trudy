@@ -66,6 +66,7 @@ func NewTCPPipe(id uint, sourceConn net.TCPConn) (pipe TCPPipe, err error) {
     originalAddrBytes,err := syscall.GetsockoptIPv6Mreq(int(f.Fd()), syscall.IPPROTO_IP, SO_ORIGINAL_DST)
     if err != nil {
         log.Println("[DEBUG] Getsockopt failed.")
+        log.Println(err)
         sourceConn.Close()
         return *tcppipe, err
     }
