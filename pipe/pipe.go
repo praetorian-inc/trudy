@@ -15,7 +15,7 @@ const SO_ORIGINAL_DST = 80
 type TCPPipe struct {
     id uint
     destination net.Conn
-    source net.TCPConn
+    source net.Conn
 }
 
 func (t *TCPPipe) Id() uint {
@@ -54,16 +54,10 @@ func ByteToConnString(multiaddr [16]byte) string {
     return (ip_string + ":" + port_string)
 }
 
-func NewTCPPipe(id uint, sourceConn net.TCPConn) (pipe TCPPipe, err error) {
+func NewTCPPipe(id uint, fd int, sourceConn net.Conn) (pipe TCPPipe, err error) {
     tcppipe := new(TCPPipe)
-    f, err := sourceConn.File()
-    if err != nil {
-        log.Println("[DEBUG] Failed to read connection file descriptor.")
-        sourceConn.Close()
-        return *tcppipe, err
-    }
     //TODO: Make the second argument system-dependent. E.g. If a linux machine: syscall.SOL_IP
-    originalAddrBytes,err := syscall.GetsockoptIPv6Mreq(int(f.Fd()), syscall.IPPROTO_IP, SO_ORIGINAL_DST)
+    originalAddrBytes,err := syscall.GetsockoptIPv6Mreq(fd, syscall.IPPROTO_IP, SO_ORIGINAL_DST)
     if err != nil {
         log.Println("[DEBUG] Getsockopt failed.")
         log.Println(err)

@@ -3,40 +3,40 @@ package main
 import (
     "net"
     "log"
-    //"crypto/tls"
+    "crypto/tls"
     "github.com/kelbyludwig/trudy/pipe"
     "github.com/kelbyludwig/trudy/module"
+    "github.com/kelbyludwig/trudy/listener"
 )
 
 var connection_count uint
 
 func main(){
-    tcpAddr,err := net.ResolveTCPAddr("tcp", ":6443")
-    errHandler(err)
-    tcpListener,err := net.ListenTCP("tcp", tcpAddr)
-    errHandler(err)
+    tcpAddr,_ := net.ResolveTCPAddr("tcp", ":6666")
+    tcpListener := new(listener.TCPListener)
+    tcpListener.Listen("tcp", tcpAddr, tls.Config{})
 
-    //cert,err := tls.LoadX509KeyPair("./certificate/trudy.crt", "./certificate/trudy.key")
-    //errHandler(err)
-    //config := tls.Config{Certificates: []tls.Certificate{cert}}
-    //tlsListener,err := tls.Listen("tcp", ":6443", &config)
-    //errHandler(err)
+    cert,_ := tls.LoadX509KeyPair("./certificate/trudy.crt", "./certificate/trudy.key")
+    config := tls.Config{Certificates: []tls.Certificate{cert}}
+    tlsAddr,_ := net.ResolveTCPAddr("tcp", ":6443")
+    tlsListener := new(listener.TLSListener)
+    tlsListener.Listen("tcp", tlsAddr, config)
 
     log.Println("[INFO] Trudy lives!")
 
-    //go ConnectionDispatcher(tlsListener, "TLS")
+    go ConnectionDispatcher(tlsListener, "TLS")
     ConnectionDispatcher(tcpListener, "TCP")
 }
 
-func ConnectionDispatcher(listener *net.TCPListener, name string) {
+func ConnectionDispatcher(listener listener.TrudyListener, name string) {
     defer listener.Close()
     for {
-        conn, err := listener.AcceptTCP()
+        fd, conn, err := listener.Accept()
         if err != nil {
             log.Printf("[ERR] Error accepting %v connection. Moving along.", name)
             continue
         }
-        tcppipe,err := pipe.NewTCPPipe(connection_count, *conn)
+        tcppipe,err := pipe.NewTCPPipe(connection_count, fd, conn)
         if err != nil {
             log.Println("[ERR] Error creating new TCPPipe.")
             continue
