@@ -64,6 +64,7 @@ func NewTCPPipe(id uint, fd int, sourceConn net.Conn) (pipe TCPPipe, err error) 
         sourceConn.Close()
         return *tcppipe, err
     }
+    //TODO: TCPPipe doesn't handle TLS. Need to do that.
     destConn,err := net.Dial("tcp", ByteToConnString(originalAddrBytes.Multiaddr))
     if err != nil {
         log.Printf("[ERR] Unable to connect to destination. Closing connection %v.\n", id)

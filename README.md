@@ -26,9 +26,12 @@ A transparent proxy that can modify and drop traffic for arbitrary TCP connectio
 
 3. Setup your host machine to use the virtual machine as its router. You should see connections being made in Trudy's console but not notice any traffic issues on the host.
 
-###TODO
-* Make application-layer modules.
-* Signing SSL/TLS traffic with a Trudy certficate.
-* Implement a UDP pipe as well.
+###Coming soon
+* Come up with a way of handling TLS (trudy->destination) connections in the TCPPipe.
+* Provide a wrapper struct for the module functions. This wrapper can help provide connection dataflow information (e.g. source->dest, dest->source) among other things.
 * Instead of PrettyPrint, define serialize and deserialize. This could allow plug and play for other interfaces.
-* Ncurses intercept modification.
+* Implement a UDP pipe.
+
+##Coming at some point
+* A GUI that can allow for manual intercept and modification.
+

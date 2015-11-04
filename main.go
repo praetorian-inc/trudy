@@ -66,16 +66,16 @@ func clientHandler(tcppipe pipe.TCPPipe) {
             continue
         }
 
-        if module.Drop(buffer[:bytesRead]){
-            continue
-        }
+        //if module.Drop(buffer[:bytesRead]){
+        //    continue
+        //}
 
-        if !module.Pass(buffer[:bytesRead]) {
-            //TODO: This won't work when Mangle returns a different sized buffer.
-            buffer = module.Mangle(buffer)
-        }
+        //if !module.Pass(buffer[:bytesRead]) {
+        //    //TODO: This won't work when Mangle returns a different sized buffer.
+        //    buffer = module.Mangle(buffer)
+        //}
 
-        //log.Println(module.PrettyPrint(buffer))
+        log.Println(module.PrettyPrint(buffer[:bytesRead]))
 
         _, err = tcppipe.WriteDestination(buffer[:bytesRead])
         if err != nil {
