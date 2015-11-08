@@ -38,10 +38,10 @@ func ConnectionDispatcher(listener listener.TrudyListener, name string) {
         }
         var p pipe.TrudyPipe
         if name == "TLS" {
-            p := new(pipe.TLSPipe)
+            p = new(pipe.TLSPipe)
             err = p.New(connection_count, fd, conn)
         } else {
-            p := new(pipe.TCPPipe)
+            p = new(pipe.TCPPipe)
             err = p.New(connection_count, fd, conn)
         }
         if err != nil {
@@ -82,7 +82,7 @@ func clientHandler(pipe pipe.TrudyPipe) {
         //    buffer = module.Mangle(buffer)
         //}
 
-        log.Println(module.PrettyPrint(buffer[:bytesRead]))
+        log.Printf("Client -> Server: \n%v\n", module.PrettyPrint(buffer[:bytesRead]))
 
         _, err = pipe.WriteDestination(buffer[:bytesRead])
         if err != nil {
@@ -102,6 +102,7 @@ func serverHandler(pipe pipe.TrudyPipe) {
         if err != nil {
             continue
         }
+        log.Printf("Server -> Client: \n%v\n", module.PrettyPrint(buffer[:bytesReadFromDestination]))
         _,err = pipe.WriteSource(buffer[:bytesReadFromDestination])
         if err != nil {
             continue

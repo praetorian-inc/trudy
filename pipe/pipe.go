@@ -13,7 +13,6 @@ import (
 //intended destination (i.e. _not_ trudy)
 const SO_ORIGINAL_DST = 80
 
-//TODO: This makes sense but not currently. The way connectinos are currently dispatched don't cooperate with an interface without reflection.
 type TrudyPipe interface {
     ReadSource(buffer []byte)       (n int, err error)
     WriteSource(buffer []byte)      (n int, err error)
@@ -23,18 +22,15 @@ type TrudyPipe interface {
     Close()
 }
 
+//TCPPipe implements the TrudyPipe interface and can be used to proxy generic TCP connections.
 type TCPPipe struct {
     id uint
     destination net.Conn
     source net.Conn
 }
 
-func (t *TCPPipe) Id() uint {
-    return t.id
-}
-
 func (t *TCPPipe) Close() {
-    log.Printf("[INFO] ( %v ) Closing TCP connection.")
+    log.Printf("[INFO] ( %v ) Closing TCP connection.", t.id)
     t.source.Close()
     t.destination.Close()
 }
@@ -116,7 +112,7 @@ func (tlspipe *TLSPipe) New(id uint, fd int, sourceConn net.Conn) (err error) {
 }
 
 func (t *TLSPipe) Close() {
-    log.Printf("[INFO] ( %v ) Closing TLS connection.")
+    log.Printf("[INFO] ( %v ) Closing TLS connection.", t.id)
     t.source.Close()
     t.destination.Close()
 }
