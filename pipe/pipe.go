@@ -19,7 +19,8 @@ type TrudyPipe interface {
     WriteSource(buffer []byte)      (n int, err error)
     ReadDestination(buffer []byte)  (n int, err error)
     WriteDestination(buffer []byte) (n int, err error)
-    New(uint, int, net.Conn)    (err error)
+    DestinationInfo()               (addr net.Addr)
+    New(uint, int, net.Conn)        (err error)
     Close()
 }
 
@@ -30,8 +31,13 @@ type TCPPipe struct {
     source net.Conn
 }
 
+func (t *TCPPipe) DestinationInfo() (addr net.Addr) {
+    addr = t.destination.RemoteAddr()
+    return
+}
+
 func (t *TCPPipe) Close() {
-    log.Printf("[INFO] ( %v ) Closing TCP connection.", t.id)
+    log.Printf("[INFO] ( %v ) Closing TCP connection.\n", t.id)
     t.source.Close()
     t.destination.Close()
 }
@@ -113,6 +119,11 @@ func (tlspipe *TLSPipe) New(id uint, fd int, sourceConn net.Conn) (err error) {
     tlspipe.source = sourceConn
     tlspipe.destination = destConn
     return nil
+}
+
+func (t *TLSPipe) DestinationInfo() (addr net.Addr) {
+    addr = t.destination.RemoteAddr()
+    return
 }
 
 func (t *TLSPipe) Close() {

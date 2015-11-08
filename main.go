@@ -73,7 +73,9 @@ func clientHandler(pipe pipe.TrudyPipe) {
             break
         }
 
-        data := module.Data{FromClient: true, Bytes: buffer[:bytesRead]}
+        data := module.Data{FromClient: true,
+            Bytes: buffer[:bytesRead],
+            DestAddr: pipe.DestinationInfo()}
         //if module.Drop(buffer[:bytesRead]){
         //    continue
         //}
@@ -103,7 +105,9 @@ func serverHandler(pipe pipe.TrudyPipe) {
         if err != nil {
             break
         }
-        data := module.Data{FromClient: false, Bytes: buffer[:bytesRead]}
+        data := module.Data{FromClient: false,
+            Bytes: buffer[:bytesRead],
+            DestAddr: pipe.DestinationInfo()}
         log.Printf("Server -> Client: \n%v\n", module.PrettyPrint(data))
         _,err = pipe.WriteSource(data.Bytes)
         if err != nil {
