@@ -4,22 +4,26 @@ import (
     "encoding/hex"
 )
 
-//TODO: Make modules aware of dataflow (client->server) & (server->client)
+//A wrapper that provides metadata that may be useful when mangling bytes on the network.
+type Data struct {
+    FromClient bool
+    Bytes      []byte
+}
 
-func Pass(input []byte) bool {
+func Pass(input Data) bool {
     return true
 }
 
-func Mangle(input []byte) []byte {
+func Mangle(input Data) Data {
     return input
 }
 
-func Drop(input []byte) bool {
+func Drop(input Data) bool {
     return false
 }
 
-func PrettyPrint(input []byte) string {
-    return hex.Dump(input)
+func PrettyPrint(input Data) string {
+    return hex.Dump(input.Bytes)
 }
 
 

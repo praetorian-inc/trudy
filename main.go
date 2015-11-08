@@ -12,6 +12,7 @@ import (
 var connection_count uint
 
 func main(){
+
     tcpAddr,_ := net.ResolveTCPAddr("tcp", ":6666")
     tcpListener := new(listener.TCPListener)
     tcpListener.Listen("tcp", tcpAddr, tls.Config{})
@@ -33,7 +34,6 @@ func ConnectionDispatcher(listener listener.TrudyListener, name string) {
     for {
         fd, conn, err := listener.Accept()
         if err != nil {
-            log.Printf("[ERR] Error accepting %v connection. Moving along.", name)
             continue
         }
         var p pipe.TrudyPipe
@@ -48,7 +48,7 @@ func ConnectionDispatcher(listener listener.TrudyListener, name string) {
             log.Println("[ERR] Error creating new pipe.")
             continue
         }
-        log.Printf("[INFO] %v Connection %v accepted!\n", name, connection_count)
+        log.Printf("[INFO] ( %v ) %v Connection accepted!\n", connection_count, name)
         go clientHandler(p)
         go serverHandler(p)
         connection_count++
@@ -70,9 +70,10 @@ func clientHandler(pipe pipe.TrudyPipe) {
     for {
         bytesRead,err := pipe.ReadSource(buffer)
         if err != nil {
-            continue
+            break
         }
 
+        data := module.Data{FromClient: true, Bytes: buffer[:bytesRead]}
         //if module.Drop(buffer[:bytesRead]){
         //    continue
         //}
@@ -82,11 +83,11 @@ func clientHandler(pipe pipe.TrudyPipe) {
         //    buffer = module.Mangle(buffer)
         //}
 
-        log.Printf("Client -> Server: \n%v\n", module.PrettyPrint(buffer[:bytesRead]))
+        log.Printf("Client -> Server: \n%v\n", module.PrettyPrint(data))
 
-        _, err = pipe.WriteDestination(buffer[:bytesRead])
+        _, err = pipe.WriteDestination(data.Bytes)
         if err != nil {
-            continue
+            break
         }
     }
 }
@@ -98,14 +99,15 @@ func serverHandler(pipe pipe.TrudyPipe) {
 
     //TODO: Timeouts!
     for {
-        bytesReadFromDestination,err := pipe.ReadDestination(buffer)
+        bytesRead,err := pipe.ReadDestination(buffer)
         if err != nil {
-            continue
+            break
         }
-        log.Printf("Server -> Client: \n%v\n", module.PrettyPrint(buffer[:bytesReadFromDestination]))
-        _,err = pipe.WriteSource(buffer[:bytesReadFromDestination])
+        data := module.Data{FromClient: false, Bytes: buffer[:bytesRead]}
+        log.Printf("Server -> Client: \n%v\n", module.PrettyPrint(data))
+        _,err = pipe.WriteSource(data.Bytes)
         if err != nil {
-            continue
+            break
         }
     }
 }

@@ -5,6 +5,7 @@ import (
     "log"
     "syscall"
     "strconv"
+    "time"
     "crypto/tls"
 )
 
@@ -36,18 +37,22 @@ func (t *TCPPipe) Close() {
 }
 
 func (t *TCPPipe) ReadSource(buffer []byte) (n int, err error) {
+    t.source.SetReadDeadline(time.Now().Add(15 * time.Second))
     return t.source.Read(buffer)
 }
 
 func (t *TCPPipe) WriteSource(buffer []byte) (n int, err error) {
+    t.source.SetWriteDeadline(time.Now().Add(15 * time.Second))
     return t.source.Write(buffer)
 }
 
 func (t *TCPPipe) ReadDestination(buffer []byte) (n int, err error) {
+    t.destination.SetReadDeadline(time.Now().Add(15 * time.Second))
     return t.destination.Read(buffer)
 }
 
 func (t *TCPPipe) WriteDestination(buffer []byte) (n int, err error) {
+    t.destination.SetWriteDeadline(time.Now().Add(15 * time.Second))
     return t.destination.Write(buffer)
 }
 
