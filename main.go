@@ -36,14 +36,21 @@ func ConnectionDispatcher(listener listener.TrudyListener, name string) {
             log.Printf("[ERR] Error accepting %v connection. Moving along.", name)
             continue
         }
-        tcppipe,err := pipe.NewTCPPipe(connection_count, fd, conn)
+        var p pipe.TrudyPipe
+        if name == "TLS" {
+            p := new(pipe.TLSPipe)
+            err = p.New(connection_count, fd, conn)
+        } else {
+            p := new(pipe.TCPPipe)
+            err = p.New(connection_count, fd, conn)
+        }
         if err != nil {
-            log.Println("[ERR] Error creating new TCPPipe.")
+            log.Println("[ERR] Error creating new pipe.")
             continue
         }
         log.Printf("[INFO] %v Connection %v accepted!\n", name, connection_count)
-        go clientHandler(tcppipe)
-        go serverHandler(tcppipe)
+        go clientHandler(p)
+        go serverHandler(p)
         connection_count++
     }
 }
@@ -54,14 +61,14 @@ func errHandler(err error) {
     }
 }
 
-func clientHandler(tcppipe pipe.TCPPipe) {
-    defer tcppipe.Close()
+func clientHandler(pipe pipe.TrudyPipe) {
+    defer pipe.Close()
 
     buffer := make([]byte, 65535)
 
     //TODO: Timeouts!
     for {
-        bytesRead,err := tcppipe.ReadSource(buffer)
+        bytesRead,err := pipe.ReadSource(buffer)
         if err != nil {
             continue
         }
@@ -77,25 +84,25 @@ func clientHandler(tcppipe pipe.TCPPipe) {
 
         log.Println(module.PrettyPrint(buffer[:bytesRead]))
 
-        _, err = tcppipe.WriteDestination(buffer[:bytesRead])
+        _, err = pipe.WriteDestination(buffer[:bytesRead])
         if err != nil {
             continue
         }
     }
 }
 
-func serverHandler(tcppipe pipe.TCPPipe) {
-    defer tcppipe.Close()
+func serverHandler(pipe pipe.TrudyPipe) {
+    defer pipe.Close()
 
     buffer := make([]byte, 65535)
 
     //TODO: Timeouts!
     for {
-        bytesReadFromDestination,err := tcppipe.ReadDestination(buffer)
+        bytesReadFromDestination,err := pipe.ReadDestination(buffer)
         if err != nil {
             continue
         }
-        _,err = tcppipe.WriteSource(buffer[:bytesReadFromDestination])
+        _,err = pipe.WriteSource(buffer[:bytesReadFromDestination])
         if err != nil {
             continue
         }
