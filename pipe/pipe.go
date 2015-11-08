@@ -76,7 +76,6 @@ func (tcppipe *TCPPipe) New(id uint, fd int, sourceConn net.Conn) (err error) {
         sourceConn.Close()
         return err
     }
-    tcppipe = &TCPPipe{id : id, source: sourceConn, destination: destConn}
     tcppipe.id = id
     tcppipe.source = sourceConn
     tcppipe.destination = destConn
