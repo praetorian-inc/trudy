@@ -12,19 +12,19 @@ type Data struct {
     DestAddr   net.Addr
 }
 
-func Pass(input Data) bool {
+func (input Data) Ignore() bool {
     return true
 }
 
-func Mangle(input Data) Data {
-    return input
+func (input *Data) Mangle() {
+
 }
 
-func Drop(input Data) bool {
+func (input Data) Drop() bool {
     return false
 }
 
-func PrettyPrint(input Data) string {
+func (input Data) PrettyPrint() string {
     return hex.Dump(input.Bytes)
 }
 

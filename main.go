@@ -76,16 +76,16 @@ func clientHandler(pipe pipe.TrudyPipe) {
         data := module.Data{FromClient: true,
             Bytes: buffer[:bytesRead],
             DestAddr: pipe.DestinationInfo()}
-        //if module.Drop(buffer[:bytesRead]){
-        //    continue
-        //}
+        if data.Drop() {
+            continue
+        }
 
-        //if !module.Pass(buffer[:bytesRead]) {
-        //    //TODO: This won't work when Mangle returns a different sized buffer.
-        //    buffer = module.Mangle(buffer)
-        //}
+        if !data.Ignore() {
+            data.Mangle()
+            bytesRead = len(data.Bytes)
+        }
 
-        log.Printf("Client -> Server: \n%v\n", module.PrettyPrint(data))
+        log.Printf("Client -> Server: \n%v\n", data.PrettyPrint())
 
         _, err = pipe.WriteDestination(data.Bytes)
         if err != nil {
@@ -108,7 +108,17 @@ func serverHandler(pipe pipe.TrudyPipe) {
         data := module.Data{FromClient: false,
             Bytes: buffer[:bytesRead],
             DestAddr: pipe.DestinationInfo()}
-        log.Printf("Server -> Client: \n%v\n", module.PrettyPrint(data))
+
+        if data.Drop() {
+            continue
+        }
+
+        if !data.Ignore() {
+            data.Mangle()
+            bytesRead = len(data.Bytes)
+        }
+
+        log.Printf("Server -> Client: \n%v\n", data.PrettyPrint())
         _,err = pipe.WriteSource(data.Bytes)
         if err != nil {
             break
