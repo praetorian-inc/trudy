@@ -30,6 +30,18 @@ A transparent proxy that can  modify and drop traffic for arbitrary TCP connecti
 
 3. Setup your host machine to use the virtual machine as its router. You should see connections being made in Trudy's console but not notice any traffic issues on the host.
 
+4. In order to manipulate data, just implement the following functions within the `module` package. 
+
+    `DoMangle`
+
+    `Mangle`
+
+    `Drop`
+
+    `PrettyPrint`
+
+    `DoPrint`
+
 ###Coming soon
 * Instead of PrettyPrint, define serialize and deserialize. This could allow plug and play for other interfaces.
 * Implement a UDP pipe.

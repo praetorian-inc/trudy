@@ -80,14 +80,16 @@ func clientHandler(pipe pipe.TrudyPipe) {
             continue
         }
 
-        if !data.Ignore() {
+        if data.DoMangle() {
             data.Mangle()
             bytesRead = len(data.Bytes)
         }
 
-        log.Printf("Client -> Server: \n%v\n", data.PrettyPrint())
+        if data.DoPrint() {
+            log.Printf("Client -> Server: \n%v\n", data.PrettyPrint())
+        }
 
-        _, err = pipe.WriteDestination(data.Bytes)
+        _, err = pipe.WriteDestination(data.Bytes[:bytesRead])
         if err != nil {
             break
         }
@@ -113,13 +115,15 @@ func serverHandler(pipe pipe.TrudyPipe) {
             continue
         }
 
-        if !data.Ignore() {
+        if data.DoMangle() {
             data.Mangle()
             bytesRead = len(data.Bytes)
         }
 
-        log.Printf("Server -> Client: \n%v\n", data.PrettyPrint())
-        _,err = pipe.WriteSource(data.Bytes)
+        if data.DoPrint() {
+            log.Printf("Server -> Client: \n%v\n", data.PrettyPrint())
+        }
+        _,err = pipe.WriteSource(data.Bytes[:bytesRead])
         if err != nil {
             break
         }
