@@ -1,10 +1,10 @@
 ##Trudy
 
-A transparent proxy that can modify and drop traffic for arbitrary TCP connections. Can be used to programmatically modify TCP traffic for proxy-unaware clients.
+A transparent proxy that can  modify and drop traffic for arbitrary TCP connections. Can be used to programmatically modify TCP traffic for proxy-unaware clients.
 
 ###Simple Setup
 
-0. Configure a virtual machine (This was tested on a 64-bit Debian 8 VM) to shove all traffic through Trudy. I personally use a Vagrant VM that sets this up for me (Vagrantfile coming soon).
+0. Configure a virtual machine (Trudy has been tested on a 64-bit Debian 8 VM) to shove all traffic through Trudy. I personally use a Vagrant VM that sets this up for me (Vagrantfile coming soon).
 
     `iptables -t nat -A PREROUTING -i eth1 -p tcp --dport 443 -m tcp -j REDIRECT --to-ports 6443`
 
@@ -24,13 +24,16 @@ A transparent proxy that can modify and drop traffic for arbitrary TCP connectio
     
     `go install`
 
-2. Run the Trudy binary as root. This starts the listener.
+2. Run the Trudy binary as root. This starts the listeners. If you ran the iptables commands above, iptables will forward traffic destined for port 443 to port 6443. Trudy listens on this port and expects traffic coming into this port to be TLS. All other TCP connections will be forwarded through port 6666.
+
+    `sudo $GOPATH/bin/trudy`
 
 3. Setup your host machine to use the virtual machine as its router. You should see connections being made in Trudy's console but not notice any traffic issues on the host.
 
 ###Coming soon
 * Instead of PrettyPrint, define serialize and deserialize. This could allow plug and play for other interfaces.
 * Implement a UDP pipe.
+* Command line flags for easy customization.
 
 ##Coming at some point
 * A GUI that can allow for manual intercept and modification.
