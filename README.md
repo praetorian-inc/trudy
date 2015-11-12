@@ -44,7 +44,7 @@ A transparent proxy that can  modify and drop traffic for arbitrary TCP connecti
 
 ###Coming soon
 * Instead of PrettyPrint, define serialize and deserialize. This could allow plug and play for other interfaces.
-* Implement a UDP pipe.
+* Implement a UDP pipe!
 * Command line flags for easy customization.
 
 ##Coming at some point
