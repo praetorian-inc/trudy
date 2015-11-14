@@ -48,5 +48,5 @@ A transparent proxy that can  modify and drop traffic for arbitrary TCP connecti
 * Command line flags for easy customization.
 
 ##Coming at some point
-* A GUI that can allow for manual intercept and modification.
+* A GUI that can allow for manual intercept and modification. This will probably be done with WebSockets.
 * On-the-fly TLS certificate generation.

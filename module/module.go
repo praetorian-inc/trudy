@@ -36,5 +36,3 @@ func (input Data) PrettyPrint() string {
 func (input Data) DoPrint() bool {
     return true
 }
-
-
