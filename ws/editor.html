@@ -1,0 +1,98 @@
+<!-- this wonderful page was found here: https://github.com/xem/hex -->
+<body onload='
+// Reset the textarea value
+m.value="00";
+
+// Init the top cell content
+for(i=0;i<16;i++)
+  t.innerHTML+=(0+i.toString(16)).slice(-2)+" ";
+'>
+<input onchange='
+// When a file is selected, reset h
+h="";
+
+// Read the uploaded file as an ArrayBuffer
+(f=new FileReader).readAsArrayBuffer(w.files[0]);
+f.onload=function(){
+  
+  // Loop on the file bytes
+  for(i in u=new Uint8Array(f.result))
+    
+    // Convert each byte in hexadecimal
+    h+=(0+u[i].toString(16)).slice(-2);
+    
+  // Write h in the hex textarea
+  m.value=h;
+  
+  // Trigger oninput on hex textarea
+  m.oninput()
+}'
+type=file id=w>
+<button>load</button>
+<br>
+<table border><td><pre><td id=t><tr><td id=l width=80>00000000<td><textarea spellcheck=false id=m oninput='
+// On input, store the length of clean hex before the textarea caret in b
+b=value
+.substr(0,selectionStart)
+.replace(/[^0-9A-F]/ig,"")
+.replace(/(..)/g,"$1 ")
+.length;
+
+// Clean the textarea value
+value=value
+.replace(/[^0-9A-F]/ig,"")
+.replace(/(..)/g,"$1 ")
+.replace(/ $/,"")
+.toUpperCase();
+
+// Set the height of the textarea according to its length
+style.height=(1.5+value.length/47)+"em";
+
+// Reset h
+h="";
+
+// Loop on textarea lines
+for(i=0;i<value.length/48;i++)
+  
+  // Add line number to h
+  h+=(1E7+(16*i).toString(16)).slice(-8)+" ";
+
+// Write h on the left column
+l.innerHTML=h;
+
+// Reset h
+h="";
+
+// Loop on the hex values
+for(i=0;i<value.length;i+=3)
+  
+  // Convert them in numbers
+  c=parseInt(value.substr(i,2),16),
+  
+  // Convert in chars (if the charCode is in [64-126] (maybe more later)) or ".".
+  h=63<c&&127>c?h+String.fromCharCode(c):h+".";
+  
+// Write h in the right column (with line breaks every 16 chars)
+r.innerHTML=h.replace(/(.{16})/g,"$1 ");
+
+// If the caret position is after a space or a line break, place it at the previous index so we can use backspace to erase hex code
+if(value[b]==" ")
+  b--;
+
+// Put the textarea caret at the right place
+setSelectionRange(b,b)'
+cols=48></textarea><td width=160 id=r>.</td>
+<button onclick='
+// On click, reset the y array
+y=[];
+
+// For each byte, add its value converted in integer to y 
+(m.value+" ").replace(/(..) /g,function(k){y.push(parseInt(k,16))});
+
+// Trigger a download of a file containing each number converted in a character, converted in a string, converted in base64
+location="data:application/octet-stream;base64,"+btoa(String.fromCharCode.apply(!1,new Uint8Array(y)))'>save
+<style>
+*{margin:0;padding:0;vertical-align:top;font:1em/1em courier}
+#m{height:1.5em;resize:none;overflow:hidden}
+#t{padding:0 2px}
+#w{position:absolute;opacity:.001}
