@@ -1,13 +1,16 @@
-package main
+package websocket
 
-import "net/http"
-import "io/ioutil"
-import "io"
-import "github.com/gorilla/websocket"
+import (
+    "github.com/gorilla/websocket"
+    "net/http"
+    "io/ioutil"
+    "io"
+)
 
 var editor string
+var wsConn *websocket.Conn
 
-func main() {
+func Listen() *websocket.Conn {
     html,_ := ioutil.ReadFile("editor.html")
     editor = string(html)
     http.HandleFunc("/", EditorServer)
@@ -16,6 +19,7 @@ func main() {
     if err != nil {
         panic(err)
     }
+    return wsConn
 }
 
 func EditorServer(w http.ResponseWriter, req *http.Request) {
@@ -31,18 +35,14 @@ func WebSocketServer(w http.ResponseWriter, req *http.Request) {
     if err != nil {
         panic(err)
     }
-    str := "42 42 42 42"
-    conn.WriteMessage(websocket.TextMessage, []byte(str))
+    wsConn = conn
 }
 
-//Sends packets to the webrowser if the packet wants to be intercepted.
-func InterceptWriter(conn *websocket.Conn) {
+//Sends packets to the web browser if the packet should be intercepted.
+func InterceptWriter(input []byte) {
 }
 
 //Retrieves packets from the web browser and sends them back through Trudy.
-func InterceptReader(conn *websocket.Conn) {
+func InterceptReader(input []byte) {
 
 }
-
-//document.getElementById('m').value = "42 42 42 42 42 42"
-//document.getElementById('m').oninput()

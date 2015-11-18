@@ -4,12 +4,15 @@ import (
     "net"
     "log"
     "crypto/tls"
+    "github.com/gorilla/websocket"
     "github.com/kelbyludwig/trudy/pipe"
     "github.com/kelbyludwig/trudy/module"
     "github.com/kelbyludwig/trudy/listener"
+    ws "github.com/kelbyludwig/trudy/websocket"
 )
 
 var connection_count uint
+var interceptChannel chan []byte
 
 func main(){
 
@@ -23,8 +26,12 @@ func main(){
     tlsListener := new(listener.TLSListener)
     tlsListener.Listen("tcp", tlsAddr, config)
 
+
     log.Println("[INFO] Trudy lives!")
 
+    websocketReady := make(chan bool)
+    go websocketHandler(websocketReady)
+    <-websocketReady
     go ConnectionDispatcher(tlsListener, "TLS")
     ConnectionDispatcher(tcpListener, "TCP")
 }
@@ -127,5 +134,17 @@ func serverHandler(pipe pipe.TrudyPipe) {
         if err != nil {
             break
         }
+    }
+}
+
+func websocketHandler(ready chan bool) {
+    conn := ws.Listen()
+    defer conn.Close()
+    channel := make(chan []byte)
+    interceptChannel = channel
+    ready <- true
+    for {
+        ibytes := <-channel
+        conn.WriteMessage(websocket.TextMessage, ibytes)
     }
 }

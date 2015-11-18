@@ -7,6 +7,8 @@ m.value="00";
 for(i=0;i<16;i++)
   t.innerHTML+=(0+i.toString(16)).slice(-2)+" ";
 '>
+
+<!-- TRUDY SPECIFIC CODE ADDED FOR THIS PROJECT -->
 <h1> ~ Trudy Intercept ~ </h1>
 <script>
     //TODO: This will have to be updated. Need to pull the address of the VM from the DOM.
@@ -16,6 +18,7 @@ for(i=0;i<16;i++)
         document.getElementById('m').oninput()
     }
 </script>
+<!-- END TRUDY SPECIFIC CODE -->
 </body>
 <table border><td><pre><td id=t><tr><td id=l width=80>00000000<td><textarea spellcheck=false id=m oninput='
 // On input, store the length of clean hex before the textarea caret in b
