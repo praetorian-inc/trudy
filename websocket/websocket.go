@@ -37,12 +37,3 @@ func WebSocketServer(w http.ResponseWriter, req *http.Request) {
     }
     wsConn = conn
 }
-
-//Sends packets to the web browser if the packet should be intercepted.
-func InterceptWriter(input []byte) {
-}
-
-//Retrieves packets from the web browser and sends them back through Trudy.
-func InterceptReader(input []byte) {
-
-}

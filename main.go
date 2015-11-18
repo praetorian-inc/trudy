@@ -12,7 +12,8 @@ import (
 )
 
 var connection_count uint
-var interceptChannel chan []byte
+var interceptSendChannel chan []byte
+var interceptRecvChannel chan []byte
 
 func main(){
 
@@ -87,7 +88,10 @@ func clientHandler(pipe pipe.TrudyPipe) {
             continue
         }
 
-        if data.DoMangle() {
+        if data.DoInterceptFromClient() {
+            //TODO: This.        
+        } else if data.DoMangle() {
+            //TODO: I think else if maybe a sane suggestion. Maybe it is not.
             data.Mangle()
             bytesRead = len(data.Bytes)
         }
@@ -140,11 +144,11 @@ func serverHandler(pipe pipe.TrudyPipe) {
 func websocketHandler(ready chan bool) {
     conn := ws.Listen()
     defer conn.Close()
-    channel := make(chan []byte)
-    interceptChannel = channel
+    interceptSendChannel = make(chan []byte)
+    interceptRecvChannel = make(chan []byte)
     ready <- true
     for {
-        ibytes := <-channel
+        ibytes := <-interceptSendChannel
         conn.WriteMessage(websocket.TextMessage, ibytes)
     }
 }

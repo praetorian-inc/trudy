@@ -36,3 +36,13 @@ func (input Data) PrettyPrint() string {
 func (input Data) DoPrint() bool {
     return true
 }
+
+//If this returns true, this will send data from the client to the Trudy intercept hex editor in your browser.
+func (input Data) DoInterceptFromClient() bool {
+    return false
+}
+
+//If this returns true, this will send data from the server to the Trudy intercept hex editor in your browser.
+func (input Data) DoInterceptFromServer() bool {
+    return false
+}
