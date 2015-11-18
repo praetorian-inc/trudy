@@ -7,29 +7,16 @@ m.value="00";
 for(i=0;i<16;i++)
   t.innerHTML+=(0+i.toString(16)).slice(-2)+" ";
 '>
-<input onchange='
-// When a file is selected, reset h
-h="";
-
-// Read the uploaded file as an ArrayBuffer
-(f=new FileReader).readAsArrayBuffer(w.files[0]);
-f.onload=function(){
-  
-  // Loop on the file bytes
-  for(i in u=new Uint8Array(f.result))
-    
-    // Convert each byte in hexadecimal
-    h+=(0+u[i].toString(16)).slice(-2);
-    
-  // Write h in the hex textarea
-  m.value=h;
-  
-  // Trigger oninput on hex textarea
-  m.oninput()
-}'
-type=file id=w>
-<button>load</button>
-<br>
+<h1> ~ Trudy Intercept ~ </h1>
+<script>
+    //TODO: This will have to be updated. Need to pull the address of the VM from the DOM.
+    var socket = new WebSocket("ws://127.0.0.1/ws")
+    socket.onmessage = function (event) {
+        document.getElementById('m').value = event.data
+        document.getElementById('m').oninput()
+    }
+</script>
+</body>
 <table border><td><pre><td id=t><tr><td id=l width=80>00000000<td><textarea spellcheck=false id=m oninput='
 // On input, store the length of clean hex before the textarea caret in b
 b=value
@@ -82,17 +69,11 @@ if(value[b]==" ")
 // Put the textarea caret at the right place
 setSelectionRange(b,b)'
 cols=48></textarea><td width=160 id=r>.</td>
-<button onclick='
-// On click, reset the y array
-y=[];
-
-// For each byte, add its value converted in integer to y 
-(m.value+" ").replace(/(..) /g,function(k){y.push(parseInt(k,16))});
-
-// Trigger a download of a file containing each number converted in a character, converted in a string, converted in base64
-location="data:application/octet-stream;base64,"+btoa(String.fromCharCode.apply(!1,new Uint8Array(y)))'>save
+</table>
 <style>
 *{margin:0;padding:0;vertical-align:top;font:1em/1em courier}
 #m{height:1.5em;resize:none;overflow:hidden}
 #t{padding:0 2px}
 #w{position:absolute;opacity:.001}
+</style>
+<button onclick="alert('sending does not work')">send</button>
