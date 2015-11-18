@@ -89,7 +89,8 @@ func clientHandler(pipe pipe.TrudyPipe) {
         }
 
         if data.DoInterceptFromClient() {
-            //TODO: This.        
+            interceptSendChannel <- data.Bytes[:bytesRead]
+            data.Bytes = <-interceptRecvChannel
         } else if data.DoMangle() {
             //TODO: I think else if maybe a sane suggestion. Maybe it is not.
             data.Mangle()
@@ -150,5 +151,7 @@ func websocketHandler(ready chan bool) {
     for {
         ibytes := <-interceptSendChannel
         conn.WriteMessage(websocket.TextMessage, ibytes)
+        _,obytes,_ := conn.ReadMessage()
+        interceptRecvChannel <- obytes
     }
 }
