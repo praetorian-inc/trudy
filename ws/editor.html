@@ -10,7 +10,7 @@ for(i=0;i<16;i++)
 <h1> ~ Trudy Intercept ~ </h1>
 <script>
     //TODO: This will have to be updated. Need to pull the address of the VM from the DOM.
-    var socket = new WebSocket("ws://127.0.0.1/ws")
+    var socket = new WebSocket("ws://127.0.0.1:8090/ws")
     socket.onmessage = function (event) {
         document.getElementById('m').value = event.data
         document.getElementById('m').oninput()

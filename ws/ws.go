@@ -11,6 +11,7 @@ func main() {
     html,_ := ioutil.ReadFile("editor.html")
     editor = string(html)
     http.HandleFunc("/", EditorServer)
+    http.HandleFunc("/ws", WebSocketServer)
     err := http.ListenAndServe(":8090", nil)
     if err != nil {
         panic(err)
@@ -22,14 +23,16 @@ func EditorServer(w http.ResponseWriter, req *http.Request) {
 }
 
 func WebSocketServer(w http.ResponseWriter, req *http.Request) {
-    var upgrader = websocket.Upgrader{
+    upgrader := websocket.Upgrader{
         ReadBufferSize:  65535,
         WriteBufferSize: 65535,
     }
-    conn, err := ugrader.Upgrade(w, r, nil)
+    conn, err := upgrader.Upgrade(w, req, nil)
     if err != nil {
         panic(err)
     }
+    str := "42 42 42 42"
+    conn.WriteMessage(websocket.TextMessage, []byte(str))
 }
 
 //Sends packets to the webrowser if the packet wants to be intercepted.
