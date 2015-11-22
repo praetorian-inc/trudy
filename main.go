@@ -90,6 +90,14 @@ func clientHandler(pipe pipe.TrudyPipe) {
                 log.Printf("[ERR] Failed to write to websocket.\n")
                 continue
             }
+            log.Printf("[DEBUG] Waiting for read.")
+            _,data,err := websocketConn.ReadMessage()
+            if err != nil {
+                log.Printf("[ERR] Failed to read from websocket.\n")
+                continue
+            }
+            //TODO: This.
+            log.Println(data)
         }
 
         if data.DoMangle() {
@@ -143,22 +151,19 @@ func serverHandler(pipe pipe.TrudyPipe) {
 }
 
 func websocketHandler() {
-    listener,err := net.Listen("tcp", ":8080")
-    if err != nil {
-        panic(err)
-    }
     upgrader := websocket.Upgrader{ ReadBufferSize: 65535, WriteBufferSize: 65535 }
     http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
         io.WriteString(w, editor)
     })
     http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+        var err error
         websocketConn, err = upgrader.Upgrade(w, r, nil)
         if err != nil {
             log.Printf("[ERR] Could not upgrade websocket connection.")
             return
         }
     })
-    err = http.Serve(listener,nil)
+    err := http.ListenAndServe(":8080",nil)
     if err != nil {
         panic(err)
     }
@@ -185,6 +190,9 @@ for(i=0;i<16;i++)
     socket.onmessage = function (event) {
         document.getElementById('m').value = event.data
         document.getElementById('m').oninput()
+    }
+    var sender = function() {
+        socket.send(document.getElementById('m').value)
     }
 </script>
 <!-- END TRUDY SPECIFIC CODE -->
@@ -248,5 +256,5 @@ cols=48></textarea><td width=160 id=r>.</td>
 #t{padding:0 2px}
 #w{position:absolute;opacity:.001}
 </style>
-<button onclick="alert('sending does not work')">send</button>
+<button onclick=sender>send</button>
 `
