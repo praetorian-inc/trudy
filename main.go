@@ -2,6 +2,7 @@ package main
 
 import (
     "io"
+    "fmt"
     "log"
     "net"
     "sync"
@@ -94,22 +95,14 @@ func clientHandler(pipe pipe.TrudyPipe) {
             bytesRead = len(data.Bytes)
         }
 
-        if data.DoPrint() {
-            log.Printf("Client -> Server: \n%v\n", data.PrettyPrint())
-        }
-
-        _, err = pipe.WriteDestination(data.Bytes[:bytesRead])
-        if err != nil {
-            break
-        }
-
         if data.DoIntercept() {
             if websocketConn == nil {
                 log.Printf("[ERR] Websocket Connection has not been setup yet! Cannot intercept.")
                 continue
             }
             websocketMutex.Lock()
-            if err := websocketConn.WriteMessage(websocket.TextMessage, data.Bytes); err != nil {
+            bs := fmt.Sprintf("% x", data.Bytes)
+            if err := websocketConn.WriteMessage(websocket.TextMessage, []byte(bs)); err != nil {
                 log.Printf("[ERR] Failed to write to websocket: %v\n", err)
                 websocketMutex.Unlock()
                 continue
@@ -130,6 +123,14 @@ func clientHandler(pipe pipe.TrudyPipe) {
             data.Bytes = moddedBytes
         }
 
+        if data.DoPrint() {
+            log.Printf("Client -> Server: \n%v\n", data.PrettyPrint())
+        }
+
+        _, err = pipe.WriteDestination(data.Bytes[:bytesRead])
+        if err != nil {
+            break
+        }
     }
 }
 
@@ -155,6 +156,34 @@ func serverHandler(pipe pipe.TrudyPipe) {
         if data.DoMangle() {
             data.Mangle()
             bytesRead = len(data.Bytes)
+        }
+
+        if data.DoIntercept() {
+            if websocketConn == nil {
+                log.Printf("[ERR] Websocket Connection has not been setup yet! Cannot intercept.")
+                continue
+            }
+            websocketMutex.Lock()
+            bs := fmt.Sprintf("% x", data.Bytes)
+            if err := websocketConn.WriteMessage(websocket.TextMessage, []byte(bs)); err != nil {
+                log.Printf("[ERR] Failed to write to websocket: %v\n", err)
+                websocketMutex.Unlock()
+                continue
+            }
+            _,moddedBytes,err := websocketConn.ReadMessage()
+            websocketMutex.Unlock()
+            if err != nil {
+                log.Printf("[ERR] Failed to read from websocket: %v\n", err)
+                continue
+            }
+            str := string(moddedBytes)
+            str = strings.Replace(str, " ", "", -1)
+            moddedBytes,err = hex.DecodeString(str)
+            if err != nil {
+                log.Printf("[ERR] Failed to decode hexedited data.")
+                continue
+            }
+            data.Bytes = moddedBytes
         }
 
         if data.DoPrint() {
