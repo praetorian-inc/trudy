@@ -246,6 +246,7 @@ for(i=0;i<16;i++)
         document.getElementById('m').oninput()
     }
 </script>
+<button onclick="sender()">send</button>
 <!-- END TRUDY SPECIFIC CODE -->
 </body>
 <table border><td><pre><td id=t><tr><td id=l width=80>00000000<td><textarea spellcheck=false id=m oninput='
@@ -307,5 +308,4 @@ cols=48></textarea><td width=160 id=r>.</td>
 #t{padding:0 2px}
 #w{position:absolute;opacity:.001}
 </style>
-<button onclick="sender()">send</button>
 `

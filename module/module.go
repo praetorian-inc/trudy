@@ -39,5 +39,5 @@ func (input Data) DoPrint() bool {
 
 //Returns true if data should be sent to the Trudy interceptor.
 func (input Data) DoIntercept() bool {
-    return true
+    return false
 }
