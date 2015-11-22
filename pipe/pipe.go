@@ -77,7 +77,6 @@ func (tcppipe *TCPPipe) New(id uint, fd int, sourceConn net.Conn) (err error) {
     originalAddrBytes,err := syscall.GetsockoptIPv6Mreq(fd, syscall.IPPROTO_IP, SO_ORIGINAL_DST)
     if err != nil {
         log.Println("[DEBUG] Getsockopt failed.")
-        log.Println(err)
         sourceConn.Close()
         return err
     }
@@ -104,7 +103,6 @@ func (tlspipe *TLSPipe) New(id uint, fd int, sourceConn net.Conn) (err error) {
     originalAddrBytes,err := syscall.GetsockoptIPv6Mreq(fd, syscall.IPPROTO_IP, SO_ORIGINAL_DST)
     if err != nil {
         log.Println("[DEBUG] Getsockopt failed.")
-        log.Println(err)
         sourceConn.Close()
         return err
     }
