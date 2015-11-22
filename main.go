@@ -5,8 +5,10 @@ import (
     "log"
     "net"
     "sync"
+    "strings"
     "net/http"
     "crypto/tls"
+    "encoding/hex"
     "github.com/kelbyludwig/trudy/pipe"
     "github.com/kelbyludwig/trudy/module"
     "github.com/kelbyludwig/trudy/listener"
@@ -107,19 +109,25 @@ func clientHandler(pipe pipe.TrudyPipe) {
                 continue
             }
             websocketMutex.Lock()
-            if err := websocketConn.WriteMessage(websocket.TextMessage, data.Bytes); err != nil {
+            if err := websocketConn.WriteMessage(websocket.BinaryMessage, data.Bytes); err != nil {
                 log.Printf("[ERR] Failed to write to websocket: %v\n", err)
                 websocketMutex.Unlock()
                 continue
             }
-            _,data,err := websocketConn.ReadMessage()
+            _,moddedBytes,err := websocketConn.ReadMessage()
             websocketMutex.Unlock()
             if err != nil {
                 log.Printf("[ERR] Failed to read from websocket: %v\n", err)
                 continue
             }
-            //TODO: This.
-            log.Println(data)
+            str := string(moddedBytes)
+            str = strings.Replace(str, " ", "", -1)
+            moddedBytes,err = hex.DecodeString(str)
+            if err != nil {
+                log.Printf("[ERR] Failed to decode hexedited data.")
+                continue
+            }
+            data.Bytes = moddedBytes
         }
 
     }
