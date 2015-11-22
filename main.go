@@ -1,15 +1,19 @@
 package main
 
 import (
+    "io"
     "net"
+    "net/http"
     "log"
     "crypto/tls"
     "github.com/kelbyludwig/trudy/pipe"
     "github.com/kelbyludwig/trudy/module"
     "github.com/kelbyludwig/trudy/listener"
+    "github.com/gorilla/websocket"
 )
 
 var connection_count uint
+var websocketConn websocket.Conn
 
 func main(){
 
@@ -25,6 +29,7 @@ func main(){
 
     log.Println("[INFO] Trudy lives!")
 
+    go websocketHandler()
     go ConnectionDispatcher(tlsListener, "TLS")
     ConnectionDispatcher(tcpListener, "TCP")
 }
@@ -127,5 +132,27 @@ func serverHandler(pipe pipe.TrudyPipe) {
         if err != nil {
             break
         }
+    }
+}
+
+func websocketHandler() {
+    listener,err := net.Listen("tcp", ":8080")
+    if err != nil {
+        panic(err)
+    }
+    upgrader := websocket.Upgrader{ ReadBufferSize: 65535, WriteBufferSize: 65535 }
+    http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+        io.WriteString(w, "hi")
+    })
+    http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+        websocketConn, err := upgrader.Upgrade(w, r, nil)
+        if err != nil {
+            log.Printf("[ERR] Could not upgrade websocket connection.")
+            return
+        }
+    })
+    err = http.Serve(listener,nil)
+    if err != nil {
+        panic(err)
     }
 }
