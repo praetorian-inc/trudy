@@ -2,9 +2,10 @@ package main
 
 import (
     "io"
-    "net"
-    "net/http"
     "log"
+    "net"
+    "sync"
+    "net/http"
     "crypto/tls"
     "github.com/kelbyludwig/trudy/pipe"
     "github.com/kelbyludwig/trudy/module"
@@ -14,6 +15,7 @@ import (
 
 var connection_count uint
 var websocketConn *websocket.Conn
+var websocketMutex *sync.Mutex
 
 func main(){
 
@@ -85,21 +87,6 @@ func clientHandler(pipe pipe.TrudyPipe) {
             continue
         }
 
-        if data.DoIntercept() {
-            if err := websocketConn.WriteMessage(websocket.TextMessage, data.Bytes); err != nil {
-                log.Printf("[ERR] Failed to write to websocket.\n")
-                continue
-            }
-            log.Printf("[DEBUG] Waiting for read.")
-            _,data,err := websocketConn.ReadMessage()
-            if err != nil {
-                log.Printf("[ERR] Failed to read from websocket.\n")
-                continue
-            }
-            //TODO: This.
-            log.Println(data)
-        }
-
         if data.DoMangle() {
             data.Mangle()
             bytesRead = len(data.Bytes)
@@ -113,6 +100,28 @@ func clientHandler(pipe pipe.TrudyPipe) {
         if err != nil {
             break
         }
+
+        if data.DoIntercept() {
+            if websocketConn == nil {
+                log.Printf("[ERR] Websocket Connection has not been setup yet! Cannot intercept.")
+                continue
+            }
+            websocketMutex.Lock()
+            if err := websocketConn.WriteMessage(websocket.TextMessage, data.Bytes); err != nil {
+                log.Printf("[ERR] Failed to write to websocket: %v\n", err)
+                websocketMutex.Unlock()
+                continue
+            }
+            _,data,err := websocketConn.ReadMessage()
+            websocketMutex.Unlock()
+            if err != nil {
+                log.Printf("[ERR] Failed to read from websocket: %v\n", err)
+                continue
+            }
+            //TODO: This.
+            log.Println(data)
+        }
+
     }
 }
 
@@ -151,6 +160,7 @@ func serverHandler(pipe pipe.TrudyPipe) {
 }
 
 func websocketHandler() {
+    websocketMutex = &sync.Mutex{}
     upgrader := websocket.Upgrader{ ReadBufferSize: 65535, WriteBufferSize: 65535 }
     http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
         io.WriteString(w, editor)
@@ -189,10 +199,11 @@ for(i=0;i<16;i++)
     var socket = new WebSocket(ws_url)
     socket.onmessage = function (event) {
         document.getElementById('m').value = event.data
-        document.getElementById('m').oninput()
     }
     var sender = function() {
         socket.send(document.getElementById('m').value)
+        document.getElementById('m').value = "00"
+        document.getElementById('m').oninput()
     }
 </script>
 <!-- END TRUDY SPECIFIC CODE -->
@@ -256,5 +267,5 @@ cols=48></textarea><td width=160 id=r>.</td>
 #t{padding:0 2px}
 #w{position:absolute;opacity:.001}
 </style>
-<button onclick=sender>send</button>
+<button onclick="sender()">send</button>
 `
