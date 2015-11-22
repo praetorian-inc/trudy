@@ -109,7 +109,7 @@ func clientHandler(pipe pipe.TrudyPipe) {
                 continue
             }
             websocketMutex.Lock()
-            if err := websocketConn.WriteMessage(websocket.BinaryMessage, data.Bytes); err != nil {
+            if err := websocketConn.WriteMessage(websocket.TextMessage, data.Bytes); err != nil {
                 log.Printf("[ERR] Failed to write to websocket: %v\n", err)
                 websocketMutex.Unlock()
                 continue
