@@ -6,6 +6,8 @@ A transparent proxy that can  modify and drop traffic for arbitrary TCP connecti
 
 0. Configure a virtual machine (Trudy has been tested on a 64-bit Debian 8 VM) to shove all traffic through Trudy. I personally use a Vagrant VM that sets this up for me (Vagrantfile coming soon).
 
+    `iptables -t nat -A PREROUTING -i eth1 -p tcp --dport 8888 -m tcp -j REDIRECT --to-ports 8080`
+
     `iptables -t nat -A PREROUTING -i eth1 -p tcp --dport 443 -m tcp -j REDIRECT --to-ports 6443`
 
     `iptables -t nat -A PREROUTING -i eth1 -p tcp -m tcp -j REDIRECT --to-ports 6666`
@@ -42,11 +44,12 @@ A transparent proxy that can  modify and drop traffic for arbitrary TCP connecti
 
     `DoPrint`
 
+    `DoIntercept`
+
 ###Coming soon
 * Instead of PrettyPrint, define serialize and deserialize. This could allow plug and play for other interfaces.
 * Implement a UDP pipe!
 * Command line flags for easy customization.
 
 ##Coming at some point
-* A GUI that can allow for manual intercept and modification. This will probably be done with WebSockets.
 * On-the-fly TLS certificate generation.
