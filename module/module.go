@@ -36,3 +36,8 @@ func (input Data) PrettyPrint() string {
 func (input Data) DoPrint() bool {
     return true
 }
+
+//Returns true if data should be sent to the Trudy interceptor.
+func (input Data) DoIntercept() bool {
+    return false
+}

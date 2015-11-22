@@ -13,7 +13,7 @@ import (
 )
 
 var connection_count uint
-var websocketConn websocket.Conn
+var websocketConn *websocket.Conn
 
 func main(){
 
@@ -85,6 +85,13 @@ func clientHandler(pipe pipe.TrudyPipe) {
             continue
         }
 
+        if data.DoIntercept() {
+            if err := websocketConn.WriteMessage(websocket.TextMessage, data.Bytes); err != nil {
+                log.Printf("[ERR] Failed to write to websocket.\n")
+                continue
+            }
+        }
+
         if data.DoMangle() {
             data.Mangle()
             bytesRead = len(data.Bytes)
@@ -145,7 +152,7 @@ func websocketHandler() {
         io.WriteString(w, "hi")
     })
     http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-        websocketConn, err := upgrader.Upgrade(w, r, nil)
+        websocketConn, err = upgrader.Upgrade(w, r, nil)
         if err != nil {
             log.Printf("[ERR] Could not upgrade websocket connection.")
             return
