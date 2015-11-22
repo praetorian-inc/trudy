@@ -121,6 +121,7 @@ func clientHandler(pipe pipe.TrudyPipe) {
                 continue
             }
             data.Bytes = moddedBytes
+            bytesRead = len(moddedBytes)
         }
 
         if data.DoPrint() {
@@ -184,6 +185,7 @@ func serverHandler(pipe pipe.TrudyPipe) {
                 continue
             }
             data.Bytes = moddedBytes
+            bytesRead = len(moddedBytes)
         }
 
         if data.DoPrint() {
@@ -236,6 +238,7 @@ for(i=0;i<16;i++)
     var socket = new WebSocket(ws_url)
     socket.onmessage = function (event) {
         document.getElementById('m').value = event.data
+        document.getElementById('m').oninput()
     }
     var sender = function() {
         socket.send(document.getElementById('m').value)
