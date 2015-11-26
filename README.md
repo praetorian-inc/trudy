@@ -46,7 +46,7 @@ A transparent proxy that can  modify and drop traffic for arbitrary TCP connecti
 
     `DoIntercept`
 
-5. To access the interceptor, visit `<IP ADDRESS OF VM>:8888/`.
+5. To access the interceptor, visit `http://<IP ADDRESS OF VM>:8888/` in your web browser.
 
 ###Coming soon
 * Instead of PrettyPrint, define serialize and deserialize.
