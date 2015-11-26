@@ -1,6 +1,11 @@
 ##Trudy
 
-A transparent proxy that can  modify and drop traffic for arbitrary TCP connections. Can be used to programmatically modify TCP traffic for proxy-unaware clients.
+A transparent proxy that can modify and drop traffic for arbitrary TCP connections. Can be used to programmatically modify TCP traffic for proxy-unaware clients.
+
+Trudy was designed for monitoring and modifying proxy-unaware devices that use non-HTTP protocols. If you want to intercept and modify HTTP(S) traffic, Burp Suite is probably the better option. 
+
+###Why I Built This
+I have done security research that invovled sitting between a embedded device and a server and modifying some custom binary protocol on the fly. This usually is a slow process that involves sniffing legitimate traffic, and then rebuilding packets programmatically. Trudy enables Burp-like features for generalized TCP traffic.
 
 ###Simple Setup
 
