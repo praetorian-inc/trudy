@@ -24,10 +24,10 @@ func main() {
 
 	tcpAddr, _ := net.ResolveTCPAddr("tcp", ":6666")
 	tcpListener := new(listener.TCPListener)
-	tcpListener.Listen("tcp", tcpAddr, tls.Config{})
+	tcpListener.Listen("tcp", tcpAddr, &tls.Config{})
 
 	cert, _ := tls.LoadX509KeyPair("./certificate/trudy.crt", "./certificate/trudy.key")
-	config := tls.Config{Certificates: []tls.Certificate{cert}}
+	config := &tls.Config{Certificates: []tls.Certificate{cert}}
 	tlsAddr, _ := net.ResolveTCPAddr("tcp", ":6443")
 	tlsListener := new(listener.TLSListener)
 	tlsListener.Listen("tcp", tlsAddr, config)

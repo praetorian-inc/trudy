@@ -12,7 +12,7 @@ import (
 type TrudyListener interface {
 	//TODO: Listen should take two strings: "tcp" or "udp" and a port to listen on.
 	//This parameter could create a Listener for both tcp and udp.
-	Listen(string, *net.TCPAddr, tls.Config)
+	Listen(string, *net.TCPAddr, *tls.Config)
 
 	//Accept returns a generic net.Conn and the file descriptor of the socket.
 	Accept() (int, net.Conn, error)
@@ -26,7 +26,7 @@ type TCPListener struct {
 	Listener *net.TCPListener
 }
 
-func (tl *TCPListener) Listen(nets string, tcpAddr *net.TCPAddr, _ tls.Config) {
+func (tl *TCPListener) Listen(nets string, tcpAddr *net.TCPAddr, _ *tls.Config) {
 	tcpListener, err := net.ListenTCP(nets, tcpAddr)
 	if err != nil {
 		panic(err)
@@ -67,7 +67,7 @@ func (tl *TLSListener) Accept() (fd int, conn net.Conn, err error) {
 	return
 }
 
-func (tl *TLSListener) Listen(nets string, laddr *net.TCPAddr, config tls.Config) {
+func (tl *TLSListener) Listen(nets string, laddr *net.TCPAddr, config *tls.Config) {
 	if len(config.Certificates) == 0 {
 		panic(errors.New("tls.Listen: no certificates in configuration"))
 	}
@@ -76,7 +76,7 @@ func (tl *TLSListener) Listen(nets string, laddr *net.TCPAddr, config tls.Config
 		panic(err)
 	}
 	tl.Listener = tcpListener
-	tl.Config = &config
+	tl.Config = config
 }
 
 func (tl *TLSListener) Close() error {
