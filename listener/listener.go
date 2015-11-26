@@ -6,6 +6,9 @@ import (
 	"net"
 )
 
+//The TrudyListener interface is used to listen for incoming connections and accept them. This is almost
+//the same as the typical Listener interface, except a net.Conn must be returned for Accept. This enables
+//Trudy to grab the original destination IP address from the kernel.
 type TrudyListener interface {
 	//TODO: Listen should take two strings: "tcp" or "udp" and a port to listen on.
 	//This parameter could create a Listener for both tcp and udp.
