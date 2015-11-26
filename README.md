@@ -46,10 +46,12 @@ A transparent proxy that can  modify and drop traffic for arbitrary TCP connecti
 
     `DoIntercept`
 
+5. To access the interceptor, visit `<IP ADDRESS OF VM>:8888/`.
+
 ###Coming soon
-* Instead of PrettyPrint, define serialize and deserialize. This could allow plug and play for other interfaces.
-* Implement a UDP pipe!
+* Instead of PrettyPrint, define serialize and deserialize.
+* Implement a UDP pipe.
 * Command line flags for easy customization.
 
-##Coming at some point
+###Coming at some point
 * On-the-fly TLS certificate generation.
