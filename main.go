@@ -16,7 +16,7 @@ import (
 	"sync"
 )
 
-var connection_count uint
+var connectionCount uint
 var websocketConn *websocket.Conn
 var websocketMutex *sync.Mutex
 
@@ -35,11 +35,11 @@ func main() {
 	log.Println("[INFO] Trudy lives!")
 
 	go websocketHandler()
-	go ConnectionDispatcher(tlsListener, "TLS")
-	ConnectionDispatcher(tcpListener, "TCP")
+	go connectionDispatcher(tlsListener, "TLS")
+	connectionDispatcher(tcpListener, "TCP")
 }
 
-func ConnectionDispatcher(listener listener.TrudyListener, name string) {
+func connectionDispatcher(listener listener.TrudyListener, name string) {
 	defer listener.Close()
 	for {
 		fd, conn, err := listener.Accept()
@@ -49,19 +49,19 @@ func ConnectionDispatcher(listener listener.TrudyListener, name string) {
 		var p pipe.TrudyPipe
 		if name == "TLS" {
 			p = new(pipe.TLSPipe)
-			err = p.New(connection_count, fd, conn)
+			err = p.New(connectionCount, fd, conn)
 		} else {
 			p = new(pipe.TCPPipe)
-			err = p.New(connection_count, fd, conn)
+			err = p.New(connectionCount, fd, conn)
 		}
 		if err != nil {
 			log.Println("[ERR] Error creating new pipe.")
 			continue
 		}
-		log.Printf("[INFO] ( %v ) %v Connection accepted!\n", connection_count, name)
+		log.Printf("[INFO] ( %v ) %v Connection accepted!\n", connectionCount, name)
 		go clientHandler(p)
 		go serverHandler(p)
-		connection_count++
+		connectionCount++
 	}
 }
 
