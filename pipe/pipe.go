@@ -26,6 +26,7 @@ type TrudyPipe interface {
 	ReadDestination(buffer []byte) (n int, err error)
 	WriteDestination(buffer []byte) (n int, err error)
 	DestinationInfo() (addr net.Addr)
+	SourceInfo() (addr net.Addr)
 	New(uint, int, net.Conn) (err error)
 	Close()
 }
@@ -40,6 +41,11 @@ type TCPPipe struct {
 //DestinationInfo returns the net.Addr of the destination.
 func (t *TCPPipe) DestinationInfo() (addr net.Addr) {
 	addr = t.destination.RemoteAddr()
+	return
+}
+
+func (t *TCPPipe) SourceInfo() (addr net.Addr) {
+	addr = t.source.RemoteAddr()
 	return
 }
 
@@ -141,6 +147,11 @@ func (t *TLSPipe) New(id uint, fd int, sourceConn net.Conn) (err error) {
 //DestinationInfo returns the net.Addr of the destination.
 func (t *TLSPipe) DestinationInfo() (addr net.Addr) {
 	addr = t.destination.RemoteAddr()
+	return
+}
+
+func (t *TLSPipe) SourceInfo() (addr net.Addr) {
+	addr = t.source.RemoteAddr()
 	return
 }
 

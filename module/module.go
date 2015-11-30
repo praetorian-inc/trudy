@@ -10,6 +10,7 @@ type Data struct {
 	FromClient bool
 	Bytes      []byte
 	DestAddr   net.Addr
+	SrcAddr    net.Addr
 }
 
 //DoMangle will return true, if Data needs to be sent to the Mangle function.
