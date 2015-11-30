@@ -191,7 +191,7 @@ func serverHandler(pipe pipe.TrudyPipe) {
 		}
 
 		if data.DoPrint() {
-			log.Printf("Server -> Client: %v -> %v\n%v\n", data.SrcAddr.String(), data.DestAddr.String(), data.PrettyPrint())
+			log.Printf("Server -> Client: %v -> %v\n%v\n", data.DestAddr.String(), data.SrcAddr.String(), data.PrettyPrint())
 		}
 		_, err = pipe.WriteSource(data.Bytes[:bytesRead])
 		if err != nil {
