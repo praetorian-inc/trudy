@@ -183,3 +183,64 @@ func (t *TLSPipe) ReadDestination(buffer []byte) (n int, err error) {
 func (t *TLSPipe) WriteDestination(buffer []byte) (n int, err error) {
 	return t.destination.Write(buffer)
 }
+
+type UDPPipe struct {
+	id          uint
+	destination net.Conn
+	source      net.Conn
+}
+
+func (u *UDPPipe) DestinationInfo() (addr net.Addr) {
+	addr = u.destination.RemoteAddr()
+	return
+}
+
+func (u *UDPPipe) SourceInfo() (addr net.Addr) {
+	addr = u.source.RemoteAddr()
+	return
+}
+
+func (u *UDPPipe) Close() {
+	u.source.Close()
+	u.destination.Close()
+}
+
+func (u *UDPPipe) ReadSource(buffer []byte) (n int, err error) {
+	u.source.SetReadDeadline(time.Now().Add(15 * time.Second))
+	return u.source.Read(buffer)
+}
+
+func (u *UDPPipe) WriteSource(buffer []byte) (n int, err error) {
+	u.source.SetWriteDeadline(time.Now().Add(15 * time.Second))
+	return u.source.Write(buffer)
+}
+
+func (u *UDPPipe) ReadDestination(buffer []byte) (n int, err error) {
+	u.destination.SetReadDeadline(time.Now().Add(15 * time.Second))
+	return u.destination.Read(buffer)
+}
+
+func (u *UDPPipe) WriteDestination(buffer []byte) (n int, err error) {
+	u.destination.SetWriteDeadline(time.Now().Add(15 * time.Second))
+	return u.destination.Write(buffer)
+}
+
+func (u *UDPPipe) New(id uint, fd int, sourceConn net.Conn) (err error) {
+	//TODO: Make the second argument system-dependent. E.g. If a linux machine: syscall.SOL_IP
+	originalAddrBytes, err := syscall.GetsockoptIPv6Mreq(fd, syscall.IPPROTO_IP, SO_ORIGINAL_DST)
+	if err != nil {
+		log.Println("[DEBUG] Getsockopt failed.")
+		sourceConn.Close()
+		return err
+	}
+	destConn, err := net.Dial("udp", byteToConnString(originalAddrBytes.Multiaddr))
+	if err != nil {
+		log.Printf("[ERR] Unable to connect to destination. Closing connection %v.\n", id)
+		sourceConn.Close()
+		return err
+	}
+	u.id = id
+	u.source = sourceConn
+	u.destination = destConn
+	return nil
+}

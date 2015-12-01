@@ -37,7 +37,6 @@ func main() {
 
 	go websocketHandler()
 	go connectionDispatcher(tlsListener, "TLS")
-	go connectionDispatcher(udpListener, "UDP")
 	connectionDispatcher(tcpListener, "TCP")
 }
 
