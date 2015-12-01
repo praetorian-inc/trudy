@@ -10,7 +10,7 @@ import (
 	"github.com/kelbyludwig/trudy/pipe"
 	"io"
 	"log"
-	"net"
+	//"net"
 	"net/http"
 	"strings"
 	"sync"
@@ -22,20 +22,22 @@ var websocketMutex *sync.Mutex
 
 func main() {
 
-	tcpAddr, _ := net.ResolveTCPAddr("tcp", ":6666")
 	tcpListener := new(listener.TCPListener)
-	tcpListener.Listen("tcp", tcpAddr, &tls.Config{})
+	tcpListener.Listen(":6666", &tls.Config{})
+
+	udpListener := new(listener.UDPListener)
+	udpListener.Listen(":6667", &tls.Config{})
 
 	burp, _ := tls.LoadX509KeyPair("./certificate/burp.crt", "./certificate/burp.key")
 	config := &tls.Config{Certificates: []tls.Certificate{burp}}
-	tlsAddr, _ := net.ResolveTCPAddr("tcp", ":6443")
 	tlsListener := new(listener.TLSListener)
-	tlsListener.Listen("tcp", tlsAddr, config)
+	tlsListener.Listen(":6443", config)
 
 	log.Println("[INFO] Trudy lives!")
 
 	go websocketHandler()
 	go connectionDispatcher(tlsListener, "TLS")
+	go connectionDispatcher(udpListener, "UDP")
 	connectionDispatcher(tcpListener, "TCP")
 }
 
