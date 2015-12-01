@@ -28,7 +28,10 @@ func main() {
 
 	burp, _ := tls.LoadX509KeyPair("./certificate/burp.crt", "./certificate/burp.key")
 	trdy, _ := tls.LoadX509KeyPair("./certificate/trdy.crt", "./certificate/trdy.key")
-	config := &tls.Config{Certificates: []tls.Certificate{burp, trdy}}
+	config := &tls.Config{
+		Certificates:       []tls.Certificate{burp, trdy},
+		InsecureSkipVerify: true,
+	}
 	tlsAddr, _ := net.ResolveTCPAddr("tcp", ":6443")
 	tlsListener := new(listener.TLSListener)
 	tlsListener.Listen("tcp", tlsAddr, config)
