@@ -76,7 +76,6 @@ func clientHandler(pipe pipe.TrudyPipe) {
 
 	buffer := make([]byte, 65535)
 
-	//TODO: Timeouts!
 	for {
 		bytesRead, err := pipe.ReadSource(buffer)
 		if err != nil {
@@ -137,11 +136,8 @@ func clientHandler(pipe pipe.TrudyPipe) {
 }
 
 func serverHandler(pipe pipe.TrudyPipe) {
-	defer pipe.Close()
-
 	buffer := make([]byte, 65535)
 
-	//TODO: Timeouts!
 	for {
 		bytesRead, err := pipe.ReadDestination(buffer)
 		if err != nil {
