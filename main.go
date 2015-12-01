@@ -26,9 +26,8 @@ func main() {
 	tcpListener := new(listener.TCPListener)
 	tcpListener.Listen("tcp", tcpAddr, &tls.Config{})
 
-	cert, _ := tls.LoadX509KeyPair("./certificate/trudy.crt", "./certificate/trudy.key")
 	burp, _ := tls.LoadX509KeyPair("./certificate/burp.crt", "./certificate/burp.key")
-	config := &tls.Config{Certificates: []tls.Certificate{cert, burp}}
+	config := &tls.Config{Certificates: []tls.Certificate{burp}}
 	tlsAddr, _ := net.ResolveTCPAddr("tcp", ":6443")
 	tlsListener := new(listener.TLSListener)
 	tlsListener.Listen("tcp", tlsAddr, config)
