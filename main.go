@@ -148,8 +148,8 @@ func serverHandler(pipe pipe.TrudyPipe) {
 		}
 		data := module.Data{FromClient: false,
 			Bytes:    buffer[:bytesRead],
-			DestAddr: pipe.DestinationInfo(),
-			SrcAddr:  pipe.SourceInfo()}
+			DestAddr: pipe.SourceInfo(),
+			SrcAddr:  pipe.DestinationInfo()}
 
 		if data.Drop() {
 			continue
