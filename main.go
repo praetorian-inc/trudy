@@ -25,25 +25,42 @@ func main() {
 	var tcpport string
 	var tlsport string
 
+	var x509 string
+	var key string
+
 	flag.StringVar(&tcpport, "tcp", "6666", "Listening port for non-TLS connections.")
 	flag.StringVar(&tlsport, "tls", "6443", "Listening port for TLS connections.")
+	flag.StringVar(&x509, "x509", "./certificate/trudy.cer", "Path to x509 certificate that will be presented for TLS connection.")
+	flag.StringVar(&key, "key", "./certificate/trudy.key", "Path to the corresponding private key for the specified x509 certificate")
 
 	flag.Parse()
 
-	setup(tcpport, tlsport)
+	setup(tcpport, tlsport, x509, key)
 }
 
-func setup(tcpport, tlsport string) {
-	tcpAddr, _ := net.ResolveTCPAddr("tcp", tcpport)
+func setup(tcpport, tlsport, x509, key string) {
+	tcpAddr, err := net.ResolveTCPAddr("tcp", tcpport)
+	if err != nil {
+		log.Printf("There appears to be an error with the TCP port you specified. See error below.\n\n%v\n", err.Error())
+		return
+	}
 	tcpListener := new(listener.TCPListener)
 	tcpListener.Listen("tcp", tcpAddr, &tls.Config{})
 
-	trdy, _ := tls.LoadX509KeyPair("./certificate/trudy.cer", "./certificate/trudy.key")
+	trdy, err := tls.LoadX509KeyPair(x509, key)
+	if err != nil {
+		log.Printf("There appears to be an error with the x509 or key values specified. See error below.\n\n%v\n", err.Error())
+		return
+	}
 	config := &tls.Config{
 		Certificates:       []tls.Certificate{trdy},
 		InsecureSkipVerify: true,
 	}
-	tlsAddr, _ := net.ResolveTCPAddr("tcp", tlsport)
+	tlsAddr, err := net.ResolveTCPAddr("tcp", tlsport)
+	if err != nil {
+		log.Printf("There appears to be an error with the TLS port specified. See error below.\n\n%v\n", err.Error())
+		return
+	}
 	tlsListener := new(listener.TLSListener)
 	tlsListener.Listen("tcp", tlsAddr, config)
 
