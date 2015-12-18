@@ -28,19 +28,22 @@ func main() {
 	var x509 string
 	var key string
 
+	var showConnectionAttempts bool
+
 	flag.StringVar(&tcpport, "tcp", "6666", "Listening port for non-TLS connections.")
 	flag.StringVar(&tlsport, "tls", "6443", "Listening port for TLS connections.")
 	flag.StringVar(&x509, "x509", "./certificate/trudy.cer", "Path to x509 certificate that will be presented for TLS connection.")
 	flag.StringVar(&key, "key", "./certificate/trudy.key", "Path to the corresponding private key for the specified x509 certificate")
+	flag.BoolVar(&showConnectionAttempts, "show", true, "Show connection open and close messages")
 
 	flag.Parse()
 
 	tcpport = ":" + tcpport
 	tlsport = ":" + tlsport
-	setup(tcpport, tlsport, x509, key)
+	setup(tcpport, tlsport, x509, key, showConnectionAttempts)
 }
 
-func setup(tcpport, tlsport, x509, key string) {
+func setup(tcpport, tlsport, x509, key string, show bool) {
 
 	//Setup non-TLS TCP listener!
 	tcpAddr, err := net.ResolveTCPAddr("tcp", tcpport)
@@ -76,12 +79,12 @@ func setup(tcpport, tlsport, x509, key string) {
 	log.Printf("[INFO] Listening for all other TCP connections on port %s\n", tcpport)
 
 	go websocketHandler()
-	go connectionDispatcher(tlsListener, "TLS")
-	connectionDispatcher(tcpListener, "TCP")
+	go connectionDispatcher(tlsListener, "TLS", show)
+	connectionDispatcher(tcpListener, "TCP", show)
 
 }
 
-func connectionDispatcher(listener listener.TrudyListener, name string) {
+func connectionDispatcher(listener listener.TrudyListener, name string, show bool) {
 	defer listener.Close()
 	for {
 		fd, conn, err := listener.Accept()
@@ -100,7 +103,10 @@ func connectionDispatcher(listener listener.TrudyListener, name string) {
 			log.Println("[ERR] Error creating new pipe.")
 			continue
 		}
-		go clientHandler(p)
+		if show {
+			log.Printf("[INFO] ( %v ) %v Connection accepted!\n", connectionCount, name)
+		}
+		go clientHandler(p, show)
 		go serverHandler(p)
 		connectionCount++
 	}
@@ -112,7 +118,10 @@ func errHandler(err error) {
 	}
 }
 
-func clientHandler(pipe pipe.TrudyPipe) {
+func clientHandler(pipe pipe.TrudyPipe, show bool) {
+	if show {
+		defer log.Printf("[INFO] ( %v ) Closing TCP connection.\n", pipe.Id())
+	}
 	defer pipe.Close()
 
 	buffer := make([]byte, 65535)
