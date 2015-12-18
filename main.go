@@ -100,7 +100,6 @@ func connectionDispatcher(listener listener.TrudyListener, name string) {
 			log.Println("[ERR] Error creating new pipe.")
 			continue
 		}
-		log.Printf("[INFO] ( %v ) %v Connection accepted!\n", connectionCount, name)
 		go clientHandler(p)
 		go serverHandler(p)
 		connectionCount++
@@ -123,7 +122,6 @@ func clientHandler(pipe pipe.TrudyPipe) {
 		if err != nil {
 			break
 		}
-
 		data := module.Data{FromClient: true,
 			Bytes:    buffer[:bytesRead],
 			DestAddr: pipe.DestinationInfo(),
