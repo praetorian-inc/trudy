@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/tls"
 	"encoding/hex"
+	"flag"
 	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/kelbyludwig/trudy/listener"
@@ -21,8 +22,19 @@ var websocketConn *websocket.Conn
 var websocketMutex *sync.Mutex
 
 func main() {
+	var tcpport string
+	var tlsport string
 
-	tcpAddr, _ := net.ResolveTCPAddr("tcp", ":6666")
+	flag.StringVar(&tcpport, "tcp", "6666", "Listening port for non-TLS connections.")
+	flag.StringVar(&tlsport, "tls", "6443", "Listening port for TLS connections.")
+
+	flag.Parse()
+
+	setup(tcpport, tlsport)
+}
+
+func setup(tcpport, tlsport string) {
+	tcpAddr, _ := net.ResolveTCPAddr("tcp", tcpport)
 	tcpListener := new(listener.TCPListener)
 	tcpListener.Listen("tcp", tcpAddr, &tls.Config{})
 
@@ -31,15 +43,18 @@ func main() {
 		Certificates:       []tls.Certificate{trdy},
 		InsecureSkipVerify: true,
 	}
-	tlsAddr, _ := net.ResolveTCPAddr("tcp", ":6443")
+	tlsAddr, _ := net.ResolveTCPAddr("tcp", tlsport)
 	tlsListener := new(listener.TLSListener)
 	tlsListener.Listen("tcp", tlsAddr, config)
 
 	log.Println("[INFO] Trudy lives!")
+	log.Printf("[INFO] Listening for TLS connections on port %s\n", tlsport)
+	log.Printf("[INFO] Listening for all other TCP connections on port %s\n", tcpport)
 
 	go websocketHandler()
 	go connectionDispatcher(tlsListener, "TLS")
 	connectionDispatcher(tcpListener, "TCP")
+
 }
 
 func connectionDispatcher(listener listener.TrudyListener, name string) {
