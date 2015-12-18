@@ -35,21 +35,25 @@ func main() {
 
 	flag.Parse()
 
+	tcpport = ":" + tcpport
+	tlsport = ":" + tlsport
 	setup(tcpport, tlsport, x509, key)
 }
 
 func setup(tcpport, tlsport, x509, key string) {
+
+	//Setup non-TLS TCP listener!
 	tcpAddr, err := net.ResolveTCPAddr("tcp", tcpport)
 	if err != nil {
-		log.Printf("There appears to be an error with the TCP port you specified. See error below.\n\n%v\n", err.Error())
+		log.Printf("There appears to be an error with the TCP port you specified. See error below.\n%v\n", err.Error())
 		return
 	}
 	tcpListener := new(listener.TCPListener)
-	tcpListener.Listen("tcp", tcpAddr, &tls.Config{})
 
+	//Setup TLS listener!
 	trdy, err := tls.LoadX509KeyPair(x509, key)
 	if err != nil {
-		log.Printf("There appears to be an error with the x509 or key values specified. See error below.\n\n%v\n", err.Error())
+		log.Printf("There appears to be an error with the x509 or key values specified. See error below.\n%v\n", err.Error())
 		return
 	}
 	config := &tls.Config{
@@ -58,10 +62,13 @@ func setup(tcpport, tlsport, x509, key string) {
 	}
 	tlsAddr, err := net.ResolveTCPAddr("tcp", tlsport)
 	if err != nil {
-		log.Printf("There appears to be an error with the TLS port specified. See error below.\n\n%v\n", err.Error())
+		log.Printf("There appears to be an error with the TLS port specified. See error below.\n%v\n", err.Error())
 		return
 	}
 	tlsListener := new(listener.TLSListener)
+
+	//All good. Start listening.
+	tcpListener.Listen("tcp", tcpAddr, &tls.Config{})
 	tlsListener.Listen("tcp", tlsAddr, config)
 
 	log.Println("[INFO] Trudy lives!")
