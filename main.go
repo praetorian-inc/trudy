@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/tls"
 	"encoding/hex"
+	"flag"
 	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/kelbyludwig/trudy/listener"
@@ -21,28 +22,69 @@ var websocketConn *websocket.Conn
 var websocketMutex *sync.Mutex
 
 func main() {
+	var tcpport string
+	var tlsport string
 
-	tcpAddr, _ := net.ResolveTCPAddr("tcp", ":6666")
+	var x509 string
+	var key string
+
+	var showConnectionAttempts bool
+
+	flag.StringVar(&tcpport, "tcp", "6666", "Listening port for non-TLS connections.")
+	flag.StringVar(&tlsport, "tls", "6443", "Listening port for TLS connections.")
+	flag.StringVar(&x509, "x509", "./certificate/trudy.cer", "Path to x509 certificate that will be presented for TLS connection.")
+	flag.StringVar(&key, "key", "./certificate/trudy.key", "Path to the corresponding private key for the specified x509 certificate")
+	flag.BoolVar(&showConnectionAttempts, "show", true, "Show connection open and close messages")
+
+	flag.Parse()
+
+	tcpport = ":" + tcpport
+	tlsport = ":" + tlsport
+	setup(tcpport, tlsport, x509, key, showConnectionAttempts)
+}
+
+func setup(tcpport, tlsport, x509, key string, show bool) {
+
+	//Setup non-TLS TCP listener!
+	tcpAddr, err := net.ResolveTCPAddr("tcp", tcpport)
+	if err != nil {
+		log.Printf("There appears to be an error with the TCP port you specified. See error below.\n%v\n", err.Error())
+		return
+	}
 	tcpListener := new(listener.TCPListener)
-	tcpListener.Listen("tcp", tcpAddr, &tls.Config{})
 
-	trdy, _ := tls.LoadX509KeyPair("./certificate/trudy.cer", "./certificate/trudy.key")
+	//Setup TLS listener!
+	trdy, err := tls.LoadX509KeyPair(x509, key)
+	if err != nil {
+		log.Printf("There appears to be an error with the x509 or key values specified. See error below.\n%v\n", err.Error())
+		return
+	}
 	config := &tls.Config{
 		Certificates:       []tls.Certificate{trdy},
 		InsecureSkipVerify: true,
 	}
-	tlsAddr, _ := net.ResolveTCPAddr("tcp", ":6443")
+	tlsAddr, err := net.ResolveTCPAddr("tcp", tlsport)
+	if err != nil {
+		log.Printf("There appears to be an error with the TLS port specified. See error below.\n%v\n", err.Error())
+		return
+	}
 	tlsListener := new(listener.TLSListener)
+
+	//All good. Start listening.
+	tcpListener.Listen("tcp", tcpAddr, &tls.Config{})
 	tlsListener.Listen("tcp", tlsAddr, config)
 
 	log.Println("[INFO] Trudy lives!")
+	log.Printf("[INFO] Listening for TLS connections on port %s\n", tlsport)
+	log.Printf("[INFO] Listening for all other TCP connections on port %s\n", tcpport)
 
 	go websocketHandler()
-	go connectionDispatcher(tlsListener, "TLS")
-	connectionDispatcher(tcpListener, "TCP")
+	go connectionDispatcher(tlsListener, "TLS", show)
+	connectionDispatcher(tcpListener, "TCP", show)
+
 }
 
-func connectionDispatcher(listener listener.TrudyListener, name string) {
+func connectionDispatcher(listener listener.TrudyListener, name string, show bool) {
 	defer listener.Close()
 	for {
 		fd, conn, err := listener.Accept()
@@ -61,8 +103,10 @@ func connectionDispatcher(listener listener.TrudyListener, name string) {
 			log.Println("[ERR] Error creating new pipe.")
 			continue
 		}
-		log.Printf("[INFO] ( %v ) %v Connection accepted!\n", connectionCount, name)
-		go clientHandler(p)
+		if show {
+			log.Printf("[INFO] ( %v ) %v Connection accepted!\n", connectionCount, name)
+		}
+		go clientHandler(p, show)
 		go serverHandler(p)
 		connectionCount++
 	}
@@ -74,7 +118,10 @@ func errHandler(err error) {
 	}
 }
 
-func clientHandler(pipe pipe.TrudyPipe) {
+func clientHandler(pipe pipe.TrudyPipe, show bool) {
+	if show {
+		defer log.Printf("[INFO] ( %v ) Closing TCP connection.\n", pipe.Id())
+	}
 	defer pipe.Close()
 
 	buffer := make([]byte, 65535)
@@ -84,7 +131,6 @@ func clientHandler(pipe pipe.TrudyPipe) {
 		if err != nil {
 			break
 		}
-
 		data := module.Data{FromClient: true,
 			Bytes:    buffer[:bytesRead],
 			DestAddr: pipe.DestinationInfo(),

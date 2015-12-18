@@ -29,6 +29,7 @@ type TrudyPipe interface {
 	SourceInfo() (addr net.Addr)
 	New(uint, int, net.Conn) (err error)
 	Close()
+	Id() uint
 }
 
 //TCPPipe implements the TrudyPipe interface and can be used to proxy generic TCP connections.
@@ -36,6 +37,11 @@ type TCPPipe struct {
 	id          uint
 	destination net.Conn
 	source      net.Conn
+}
+
+//Id returns a TCPPipe identifier
+func (t *TCPPipe) Id() uint {
+	return t.id
 }
 
 //DestinationInfo returns the net.Addr of the destination.
@@ -51,7 +57,6 @@ func (t *TCPPipe) SourceInfo() (addr net.Addr) {
 
 //Close closes both ends of a TCPPipe.
 func (t *TCPPipe) Close() {
-	log.Printf("[INFO] ( %v ) Closing TCP connection.\n", t.id)
 	t.source.Close()
 	t.destination.Close()
 }
@@ -120,6 +125,11 @@ type TLSPipe struct {
 	id          uint
 	destination net.Conn
 	source      net.Conn
+}
+
+//Id returns a TLSPipe identifier
+func (t *TLSPipe) Id() uint {
+	return t.id
 }
 
 //New creates a new TLSPipe.
