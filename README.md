@@ -6,7 +6,7 @@ Trudy was designed for monitoring and modifying proxy-unaware devices that use n
 
 ## Author
 
-Written by Kelby Ludwig (@kelbyludwg)
+Written by Kelby Ludwig ([@kelbyludwig](https://twitter.com/kelbyludwig))
 
 
 ###Why I Built This
