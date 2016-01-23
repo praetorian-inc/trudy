@@ -43,7 +43,7 @@ I have done security research that invovled sitting between a embedded device an
 
 3. Setup your host machine to use the virtual machine as its router. You should see connections being made in Trudy's console but not notice any traffic issues on the host machine (except TLS errors).
 
-4. In order to manipulate data, just implement the following functions within the `module` package. 
+4. In order to manipulate data, just implement the following functions within the `module` package. I (hopefully) made the naming scheme intuitive. More detailed documentation is in the `module` package.
 
     `DoMangle`
 
@@ -51,9 +51,9 @@ I have done security research that invovled sitting between a embedded device an
 
     `Drop`
 
-    `PrettyPrint`
-
     `DoPrint`
+
+    `PrettyPrint`
 
     `DoIntercept`
 
