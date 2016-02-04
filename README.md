@@ -43,7 +43,7 @@ I have done security research that invovled sitting between a embedded device an
 
 3. Setup your host machine to use the virtual machine as its router. You should see connections being made in Trudy's console but not notice any traffic issues on the host machine (except TLS errors).
 
-4. In order to manipulate data, just implement the following functions within the `module` package. I (hopefully) made the naming scheme intuitive. More detailed documentation is in the `module` package.
+4. In order to manipulate data, just implement whatever functions you might need within the `module` package. The default implementations for these functions are hands-off, so if they do not make sense for your situation, feel free to leave them as they are. I (hopefully) made the naming scheme intuitive. More detailed documentation is in the `module` package.
 
     `DoMangle`
 
@@ -56,5 +56,9 @@ I have done security research that invovled sitting between a embedded device an
     `PrettyPrint`
 
     `DoIntercept`
+
+    `Serialize`
+
+    `Deserialize`
 
 5. To access the interceptor, visit `http://<IP ADDRESS OF VM>:8888/` in your web browser. The only gotcha here is you must visit the interceptor after starting Trudy but before Trudy recieves a packet that it wants to intercept. 

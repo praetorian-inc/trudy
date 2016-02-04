@@ -139,6 +139,8 @@ func clientHandler(pipe pipe.TrudyPipe, show bool) {
 			continue
 		}
 
+		data.Deserialize()
+
 		if data.DoMangle() {
 			data.Mangle()
 			bytesRead = len(data.Bytes)
@@ -176,6 +178,8 @@ func clientHandler(pipe pipe.TrudyPipe, show bool) {
 		if data.DoPrint() {
 			log.Printf("%v -> %v\n%v\n", data.SrcAddr.String(), data.DestAddr.String(), data.PrettyPrint())
 		}
+
+		data.Serialize()
 
 		_, err = pipe.WriteDestination(data.Bytes[:bytesRead])
 		if err != nil {
