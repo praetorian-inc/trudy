@@ -288,7 +288,6 @@ for(i=0;i<16;i++)
 <!-- TRUDY SPECIFIC CODE ADDED FOR THIS PROJECT -->
 <h1> ~ Trudy Intercept ~ </h1>
 <script>
-    //TODO: This will have to be updated. Need to pull the address of the VM from the DOM.
     var url = window.location.href
     var arr = url.split("/");
     var ws_url = "ws://" + arr[2] + "/ws"
@@ -298,6 +297,14 @@ for(i=0;i<16;i++)
         document.getElementById('m').oninput()
     }
     var sender = function() {
+	var value = document.getElementById('m').value
+	if (value == "00") {
+		if (confirm('Do you really want to send a null byte?')) {
+        		socket.send(document.getElementById('m').value)
+		} else {
+			return
+		}
+	}
         socket.send(document.getElementById('m').value)
         document.getElementById('m').value = "00"
         document.getElementById('m').oninput()
