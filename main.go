@@ -293,24 +293,30 @@ for(i=0;i<16;i++)
     var ws_url = "ws://" + arr[2] + "/ws"
     var socket = new WebSocket(ws_url)
     socket.onmessage = function (event) {
-        document.getElementById('m').value = event.data
-        document.getElementById('m').oninput()
+	var elem = document.getElementById('m')
+        elem.value = event.data
+	elem.disabled = false
+        elem.oninput()
     }
     var sender = function() {
-	var value = document.getElementById('m').value
+	var elem = document.getElementById('m')
+	var value = elem.value
 	if (value == "00") {
 		if (confirm('Do you really want to send a null byte?')) {
         		socket.send(document.getElementById('m').value)
+			elem.disabled = true
+
 		} else {
 			return
 		}
 	}
         socket.send(document.getElementById('m').value)
+	elem.disabled = true
         document.getElementById('m').value = "00"
         document.getElementById('m').oninput()
     }
 </script>
-<button onclick="sender()">send</button>
+<button onclick="sender()" disabled=true>send</button>
 <!-- END TRUDY SPECIFIC CODE -->
 </body>
 <table border><td><pre><td id=t><tr><td id=l width=80>00000000<td><textarea spellcheck=false id=m oninput='
