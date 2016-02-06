@@ -43,3 +43,15 @@ func (input Data) DoPrint() bool {
 func (input Data) DoIntercept() bool {
 	return false
 }
+
+//Deserialize should replace the Data struct's Bytes with a deserialized bytes.
+//For example, unpacking a HTTP/2 frame would be deserialization.
+func (input *Data) Deserialize() {
+
+}
+
+//Serialize should replace the Data struct's Bytes with the serialized form of the bytes.
+//The serialized bytes will be sent over the wire.
+func (input *Data) Serialize() {
+
+}
