@@ -288,22 +288,23 @@ for(i=0;i<16;i++)
 <!-- TRUDY SPECIFIC CODE ADDED FOR THIS PROJECT -->
 <h1> ~ Trudy Intercept ~ </h1>
 <script>
-    //TODO: This will have to be updated. Need to pull the address of the VM from the DOM.
     var url = window.location.href
     var arr = url.split("/");
     var ws_url = "ws://" + arr[2] + "/ws"
     var socket = new WebSocket(ws_url)
     socket.onmessage = function (event) {
-        document.getElementById('m').value = event.data
-        document.getElementById('m').oninput()
+	document.getElementById('m').value = event.data
+	document.getElementById('m').oninput()
+	document.getElementById('send').disabled = false
     }
     var sender = function() {
         socket.send(document.getElementById('m').value)
+	document.getElementById('send').disabled = true
         document.getElementById('m').value = "00"
         document.getElementById('m').oninput()
     }
 </script>
-<button onclick="sender()">send</button>
+<button onclick="sender()" id='send' disabled=true>send</button>
 <!-- END TRUDY SPECIFIC CODE -->
 </body>
 <table border><td><pre><td id=t><tr><td id=l width=80>00000000<td><textarea spellcheck=false id=m oninput='
