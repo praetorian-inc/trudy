@@ -294,20 +294,10 @@ for(i=0;i<16;i++)
     var socket = new WebSocket(ws_url)
     socket.onmessage = function (event) {
 	document.getElementById('m').value = event.data
-        document.getElementById('m').oninput()
+	document.getElementById('m').oninput()
 	document.getElementById('send').disabled = false
     }
     var sender = function() {
-	var value = document.getElementById('m').value
-	if (value == "00") {
-		if (confirm('Do you really want to send a null byte?')) {
-        		socket.send(document.getElementById('m').value)
-			document.getElementById('send').disabled = true
-
-		} else {
-			return
-		}
-	}
         socket.send(document.getElementById('m').value)
 	document.getElementById('send').disabled = true
         document.getElementById('m').value = "00"
