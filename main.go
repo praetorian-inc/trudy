@@ -135,11 +135,12 @@ func clientHandler(pipe pipe.TrudyPipe, show bool) {
 			Bytes:    buffer[:bytesRead],
 			DestAddr: pipe.DestinationInfo(),
 			SrcAddr:  pipe.SourceInfo()}
+
+		data.Deserialize()
+
 		if data.Drop() {
 			continue
 		}
-
-		data.Deserialize()
 
 		if data.DoMangle() {
 			data.Mangle()
@@ -201,6 +202,8 @@ func serverHandler(pipe pipe.TrudyPipe) {
 			DestAddr: pipe.SourceInfo(),
 			SrcAddr:  pipe.DestinationInfo()}
 
+		data.Deserialize()
+
 		if data.Drop() {
 			continue
 		}
@@ -242,6 +245,9 @@ func serverHandler(pipe pipe.TrudyPipe) {
 		if data.DoPrint() {
 			log.Printf("%v -> %v\n%v\n", data.DestAddr.String(), data.SrcAddr.String(), data.PrettyPrint())
 		}
+
+		data.Serialize()
+
 		_, err = pipe.WriteSource(data.Bytes[:bytesRead])
 		if err != nil {
 			break
