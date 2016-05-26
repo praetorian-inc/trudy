@@ -20,6 +20,7 @@ import (
 var connectionCount uint
 var websocketConn *websocket.Conn
 var websocketMutex *sync.Mutex
+var logChan chan string
 
 func main() {
 	var tcpport string
@@ -40,6 +41,7 @@ func main() {
 
 	tcpport = ":" + tcpport
 	tlsport = ":" + tlsport
+	logCan = make(chan string)
 	setup(tcpport, tlsport, x509, key, showConnectionAttempts)
 }
 
@@ -79,9 +81,19 @@ func setup(tcpport, tlsport, x509, key string, show bool) {
 	log.Printf("[INFO] Listening for all other TCP connections on port %s\n", tcpport)
 
 	go websocketHandler()
+	go logHandler()
 	go connectionDispatcher(tlsListener, "TLS", show)
 	connectionDispatcher(tcpListener, "TCP", show)
 
+}
+
+func logHandler() {
+	for {
+		select {
+		case logMsg := <-logChan:
+			log.Println(logMsg)
+		}
+	}
 }
 
 func connectionDispatcher(listener listener.TrudyListener, name string, show bool) {
@@ -104,10 +116,10 @@ func connectionDispatcher(listener listener.TrudyListener, name string, show boo
 			continue
 		}
 		if show {
-			log.Printf("[INFO] ( %v ) %v Connection accepted!\n", connectionCount, name)
+			logChan <- fmt.Sprintf("[INFO] ( %v ) %v Connection accepted!\n", connectionCount, name)
 		}
 		go clientHandler(p, show)
-		go serverHandler(p)
+		go serverHandler(p, show)
 		connectionCount++
 	}
 }
@@ -120,7 +132,9 @@ func errHandler(err error) {
 
 func clientHandler(pipe pipe.TrudyPipe, show bool) {
 	if show {
-		defer log.Printf("[INFO] ( %v ) Closing TCP connection.\n", pipe.Id())
+		//TODO: Wat.
+		f := func() { logChan <- fmt.Sprintf("[INFO] ( %v ) Closing connection.\n", pipe.Id()) }
+		defer f()
 	}
 	defer pipe.Close()
 
@@ -189,8 +203,13 @@ func clientHandler(pipe pipe.TrudyPipe, show bool) {
 	}
 }
 
-func serverHandler(pipe pipe.TrudyPipe) {
+func serverHandler(pipe pipe.TrudyPipe, show bool) {
 	buffer := make([]byte, 65535)
+
+	if show {
+		f := func() { logChan <- fmt.Sprintf("[INFO] ( %v ) Closing connection.\n", pipe.Id()) }
+		defer f()
+	}
 
 	for {
 		bytesRead, err := pipe.ReadDestination(buffer)
