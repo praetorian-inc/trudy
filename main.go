@@ -243,7 +243,7 @@ func serverHandler(pipe pipe.TrudyPipe) {
 		}
 
 		if data.DoPrint() {
-			log.Printf("%v -> %v\n%v\n", data.DestAddr.String(), data.SrcAddr.String(), data.PrettyPrint())
+			log.Printf("%v -> %v\n%v\n", data.SrcAddr.String(), data.DestAddr.String(), data.PrettyPrint())
 		}
 
 		data.Serialize()
