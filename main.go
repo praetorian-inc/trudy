@@ -41,7 +41,7 @@ func main() {
 
 	tcpport = ":" + tcpport
 	tlsport = ":" + tlsport
-	logCan = make(chan string)
+	logChan = make(chan string)
 	setup(tcpport, tlsport, x509, key, showConnectionAttempts)
 }
 
