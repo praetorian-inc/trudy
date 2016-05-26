@@ -167,7 +167,6 @@ func (t *TLSPipe) SourceInfo() (addr net.Addr) {
 
 //Close closes both ends of a TLSPipe.
 func (t *TLSPipe) Close() {
-	log.Printf("[INFO] ( %v ) Closing TLS connection.", t.id)
 	t.source.Close()
 	t.destination.Close()
 }
