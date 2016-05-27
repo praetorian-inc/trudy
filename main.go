@@ -182,7 +182,7 @@ func clientHandler(pipe pipe.TrudyPipe, show bool) {
 
 		data.Serialize()
 
-		_, err = pipe.WriteDestination(data.Bytes[:bytesRead])
+		_, err := pipe.WriteDestination(data.Bytes[:bytesRead])
 		if err != nil || readSourceErr == io.EOF {
 			break
 		}
@@ -250,7 +250,7 @@ func serverHandler(pipe pipe.TrudyPipe) {
 
 		data.Serialize()
 
-		_, err = pipe.WriteSource(data.Bytes[:bytesRead])
+		_, err := pipe.WriteSource(data.Bytes[:bytesRead])
 		if err != nil || readDestErr == io.EOF {
 			break
 		}
