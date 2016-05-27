@@ -127,8 +127,8 @@ func clientHandler(pipe pipe.TrudyPipe, show bool) {
 	buffer := make([]byte, 65535)
 
 	for {
-		bytesRead, err := pipe.ReadSource(buffer)
-		if err != nil {
+		bytesRead, readSourceErr := pipe.ReadSource(buffer)
+		if bytesRead == 0 && readSourceErr != nil {
 			break
 		}
 		data := module.Data{FromClient: true,
@@ -182,8 +182,8 @@ func clientHandler(pipe pipe.TrudyPipe, show bool) {
 
 		data.Serialize()
 
-		_, err = pipe.WriteDestination(data.Bytes[:bytesRead])
-		if err != nil {
+		_, err := pipe.WriteDestination(data.Bytes[:bytesRead])
+		if err != nil || readSourceErr == io.EOF {
 			break
 		}
 	}
@@ -192,9 +192,11 @@ func clientHandler(pipe pipe.TrudyPipe, show bool) {
 func serverHandler(pipe pipe.TrudyPipe) {
 	buffer := make([]byte, 65535)
 
+	defer pipe.Close()
+
 	for {
-		bytesRead, err := pipe.ReadDestination(buffer)
-		if err != nil {
+		bytesRead, readDestErr := pipe.ReadDestination(buffer)
+		if bytesRead == 0 && readDestErr != nil {
 			break
 		}
 		data := module.Data{FromClient: false,
@@ -248,8 +250,8 @@ func serverHandler(pipe pipe.TrudyPipe) {
 
 		data.Serialize()
 
-		_, err = pipe.WriteSource(data.Bytes[:bytesRead])
-		if err != nil {
+		_, err := pipe.WriteSource(data.Bytes[:bytesRead])
+		if err != nil || readDestErr == io.EOF {
 			break
 		}
 	}
