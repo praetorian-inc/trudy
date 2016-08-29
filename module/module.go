@@ -9,8 +9,8 @@ import (
 type Data struct {
 	FromClient bool     //FromClient is true is the data sent is coming from the client (the device you are proxying)
 	Bytes      []byte   //Bytes is a byte slice that contians the TCP data
-	DestAddr   net.Addr //DestAddr is net.Addr of the server
-	SrcAddr    net.Addr //SrcAddr is the net.Addr of the client (the device you are proxying)
+	ServerAddr net.Addr //DestAddr is net.Addr of the server
+	ClientAddr net.Addr //SrcAddr is the net.Addr of the client (the device you are proxying)
 }
 
 //DoMangle will return true if Data needs to be sent to the Mangle function.

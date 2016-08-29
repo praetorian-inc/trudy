@@ -132,9 +132,9 @@ func clientHandler(pipe pipe.TrudyPipe, show bool) {
 			break
 		}
 		data := module.Data{FromClient: true,
-			Bytes:    buffer[:bytesRead],
-			DestAddr: pipe.ServerInfo(), //XXX(kkl): Fix the dest / src thing here.
-			SrcAddr:  pipe.ClientInfo()} //XXX(kkl): Fix the dest / src thing here.
+			Bytes:      buffer[:bytesRead],
+			ServerAddr: pipe.ServerInfo(),
+			ClientAddr: pipe.ClientInfo()}
 
 		data.Deserialize()
 
@@ -177,7 +177,7 @@ func clientHandler(pipe pipe.TrudyPipe, show bool) {
 		}
 
 		if data.DoPrint() {
-			log.Printf("%v -> %v\n%v\n", data.SrcAddr.String(), data.DestAddr.String(), data.PrettyPrint())
+			log.Printf("%v -> %v\n%v\n", data.ClientAddr.String(), data.ServerAddr.String(), data.PrettyPrint())
 		}
 
 		data.Serialize()
@@ -198,9 +198,9 @@ func serverHandler(pipe pipe.TrudyPipe) {
 			break
 		}
 		data := module.Data{FromClient: false,
-			Bytes:    buffer[:bytesRead],
-			DestAddr: pipe.ClientInfo(), //XXX(kkl): Fix the dest / src thing here.
-			SrcAddr:  pipe.ServerInfo()} //XXX(kkl): Fix the dest / src thing here.
+			Bytes:      buffer[:bytesRead],
+			ClientAddr: pipe.ClientInfo(),
+			ServerAddr: pipe.ServerInfo()}
 
 		data.Deserialize()
 
@@ -243,7 +243,7 @@ func serverHandler(pipe pipe.TrudyPipe) {
 		}
 
 		if data.DoPrint() {
-			log.Printf("%v -> %v\n%v\n", data.DestAddr.String(), data.SrcAddr.String(), data.PrettyPrint())
+			log.Printf("%v -> %v\n%v\n", data.ServerAddr.String(), data.ClientAddr.String(), data.PrettyPrint())
 		}
 
 		data.Serialize()
