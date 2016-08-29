@@ -21,12 +21,12 @@ const SO_ORIGINAL_DST = 80
 //back-and-forth between the two connections. All modifications and drops to the packet happen
 //to data between the two ends of the pipe.
 type TrudyPipe interface {
-	ReadSource(buffer []byte) (n int, err error)
-	WriteSource(buffer []byte) (n int, err error)
-	ReadDestination(buffer []byte) (n int, err error)
-	WriteDestination(buffer []byte) (n int, err error)
-	DestinationInfo() (addr net.Addr)
-	SourceInfo() (addr net.Addr)
+	ReadFromClient(buffer []byte) (n int, err error)
+	WriteToClient(buffer []byte) (n int, err error)
+	ReadFromServer(buffer []byte) (n int, err error)
+	WriteToServer(buffer []byte) (n int, err error)
+	ServerInfo() (addr net.Addr)
+	ClientInfo() (addr net.Addr)
 	New(uint, int, net.Conn) (err error)
 	Close()
 	Id() uint
@@ -34,9 +34,9 @@ type TrudyPipe interface {
 
 //TCPPipe implements the TrudyPipe interface and can be used to proxy generic TCP connections.
 type TCPPipe struct {
-	id          uint
-	destination net.Conn
-	source      net.Conn
+	id         uint
+	serverConn net.Conn
+	clientConn net.Conn
 }
 
 //Id returns a TCPPipe identifier
@@ -44,47 +44,50 @@ func (t *TCPPipe) Id() uint {
 	return t.id
 }
 
-//DestinationInfo returns the net.Addr of the destination.
-func (t *TCPPipe) DestinationInfo() (addr net.Addr) {
-	addr = t.destination.RemoteAddr()
+//ServerInfo returns the net.Addr of the server.
+func (t *TCPPipe) ServerInfo() (addr net.Addr) {
+	addr = t.serverConn.RemoteAddr()
 	return
 }
 
-func (t *TCPPipe) SourceInfo() (addr net.Addr) {
-	addr = t.source.RemoteAddr()
+//ClientInfo returns the net.Addr of the client.
+func (t *TCPPipe) ClientInfo() (addr net.Addr) {
+	addr = t.clientConn.RemoteAddr()
 	return
 }
 
 //Close closes both ends of a TCPPipe.
 func (t *TCPPipe) Close() {
-	t.source.Close()
-	t.destination.Close()
+	t.serverConn.Close()
+	t.clientConn.Close()
 }
 
-//ReadSource reads data from the source end of the pipe. This is typically the proxy-unaware client.
-func (t *TCPPipe) ReadSource(buffer []byte) (n int, err error) {
-	t.source.SetReadDeadline(time.Now().Add(15 * time.Second))
-	return t.source.Read(buffer)
+//ReadFromClient reads data from the client end of the pipe. This is typically the proxy-unaware client.
+func (t *TCPPipe) ReadFromClient(buffer []byte) (n int, err error) {
+	//TODO(kkl): Make timeouts configureable.
+	t.clientConn.SetReadDeadline(time.Now().Add(15 * time.Second))
+	return t.clientConn.Read(buffer)
 }
 
-//WriteSource writes data to the source end of the pipe. This is typically the proxy-unaware client.
-func (t *TCPPipe) WriteSource(buffer []byte) (n int, err error) {
-	t.source.SetWriteDeadline(time.Now().Add(15 * time.Second))
-	return t.source.Write(buffer)
+//WriteToClient writes data to the client end of the pipe. This is typically the proxy-unaware client.
+func (t *TCPPipe) WriteToClient(buffer []byte) (n int, err error) {
+	//TODO(kkl): Make timeouts configureable.
+	t.clientConn.SetWriteDeadline(time.Now().Add(15 * time.Second))
+	return t.clientConn.Write(buffer)
 }
 
-//ReadDestination reads data from the destination end of the pipe. The destination is the proxy-unaware
+//ReadFromServer reads data from the server end of the pipe. The server is the proxy-unaware
 //client's intended destination.
-func (t *TCPPipe) ReadDestination(buffer []byte) (n int, err error) {
-	t.destination.SetReadDeadline(time.Now().Add(15 * time.Second))
-	return t.destination.Read(buffer)
+func (t *TCPPipe) ReadFromServer(buffer []byte) (n int, err error) {
+	t.serverConn.SetReadDeadline(time.Now().Add(15 * time.Second))
+	return t.serverConn.Read(buffer)
 }
 
-//WriteDestination writes data to the destination end of the pipe. The destination is the proxy-unaware
+//WriteToServer writes data to the server end of the pipe. The server is the proxy-unaware
 //client's intended destination.
-func (t *TCPPipe) WriteDestination(buffer []byte) (n int, err error) {
-	t.destination.SetWriteDeadline(time.Now().Add(15 * time.Second))
-	return t.destination.Write(buffer)
+func (t *TCPPipe) WriteToServer(buffer []byte) (n int, err error) {
+	t.serverConn.SetWriteDeadline(time.Now().Add(15 * time.Second))
+	return t.serverConn.Write(buffer)
 }
 
 //byteToConnString converts the Multiaddr bytestring returned by Getsockopt into a "host:port" connection string.
@@ -97,24 +100,25 @@ func byteToConnString(multiaddr [16]byte) string {
 	return (ipString + ":" + portString)
 }
 
-//New creates a new TCPPipe.
-func (t *TCPPipe) New(id uint, fd int, sourceConn net.Conn) (err error) {
-	//TODO: Make the second argument system-dependent. E.g. If a linux machine: syscall.SOL_IP
+//New builds a new TCPPipe.
+func (t *TCPPipe) New(id uint, fd int, clientConn net.Conn) (err error) {
+	//TODO(kkl): Make the second argument system-dependent. E.g. If a linux machine: syscall.SOL_IP
 	originalAddrBytes, err := syscall.GetsockoptIPv6Mreq(fd, syscall.IPPROTO_IP, SO_ORIGINAL_DST)
 	if err != nil {
 		log.Println("[DEBUG] Getsockopt failed.")
-		sourceConn.Close()
+		clientConn.Close()
 		return err
 	}
-	destConn, err := net.Dial("tcp", byteToConnString(originalAddrBytes.Multiaddr))
+	serverConn, err := net.Dial("tcp", byteToConnString(originalAddrBytes.Multiaddr))
 	if err != nil {
-		log.Printf("[ERR] Unable to connect to destination. Closing connection %v.\n", id)
-		sourceConn.Close()
+		log.Printf("[ERR] Unable to connect to destination. Closing pipe.\n", id)
+		clientConn.Close()
+		serverConn.Close()
 		return err
 	}
 	t.id = id
-	t.source = sourceConn
-	t.destination = destConn
+	t.clientConn = clientConn
+	t.serverConn = serverConn
 	return nil
 }
 
@@ -122,9 +126,9 @@ func (t *TCPPipe) New(id uint, fd int, sourceConn net.Conn) (err error) {
 //currently just accepts TLS connections and poses as the destination. Obviously, TLS should stop this,
 //so a reasonable well-designed client should _not_ allow this. But sometimes that is possible.
 type TLSPipe struct {
-	id          uint
-	destination net.Conn
-	source      net.Conn
+	id         uint
+	serverConn net.Conn
+	clientConn net.Conn
 }
 
 //Id returns a TLSPipe identifier
@@ -133,63 +137,63 @@ func (t *TLSPipe) Id() uint {
 }
 
 //New creates a new TLSPipe.
-func (t *TLSPipe) New(id uint, fd int, sourceConn net.Conn) (err error) {
+func (t *TLSPipe) New(id uint, fd int, clientConn net.Conn) (err error) {
 	//TODO: Make the second argument system-dependent. E.g. If a linux machine: syscall.SOL_IP
 	originalAddrBytes, err := syscall.GetsockoptIPv6Mreq(fd, syscall.IPPROTO_IP, SO_ORIGINAL_DST)
 	if err != nil {
 		log.Println("[DEBUG] Getsockopt failed.")
-		sourceConn.Close()
+		clientConn.Close()
 		return err
 	}
 	tlsconfig := &tls.Config{InsecureSkipVerify: true}
-	destConn, err := tls.Dial("tcp", byteToConnString(originalAddrBytes.Multiaddr), tlsconfig)
+	serverConn, err := tls.Dial("tcp", byteToConnString(originalAddrBytes.Multiaddr), tlsconfig)
 	if err != nil {
 		log.Printf("[ERR] Unable to connect to destination. Closing connection %v.\n", id)
-		sourceConn.Close()
+		clientConn.Close()
+		serverConn.Close()
 		return err
 	}
 	t.id = id
-	t.source = sourceConn
-	t.destination = destConn
+	t.clientConn = clientConn
+	t.serverConn = serverConn
 	return nil
 }
 
-//DestinationInfo returns the net.Addr of the destination.
-func (t *TLSPipe) DestinationInfo() (addr net.Addr) {
-	addr = t.destination.RemoteAddr()
+//ServerInfo returns the net.Addr of the server.
+func (t *TLSPipe) ServerInfo() (addr net.Addr) {
+	addr = t.serverConn.RemoteAddr()
 	return
 }
 
-func (t *TLSPipe) SourceInfo() (addr net.Addr) {
-	addr = t.source.RemoteAddr()
+//ClientInfo returns the net.Addr of the client.
+func (t *TLSPipe) ClientInfo() (addr net.Addr) {
+	addr = t.clientConn.RemoteAddr()
 	return
 }
 
 //Close closes both ends of a TLSPipe.
 func (t *TLSPipe) Close() {
 	log.Printf("[INFO] ( %v ) Closing TLS connection.", t.id)
-	t.source.Close()
-	t.destination.Close()
+	t.clientConn.Close()
+	t.serverConn.Close()
 }
 
-//ReadSource reads data from the source end of the pipe. This is typically the proxy-unaware client.
-func (t *TLSPipe) ReadSource(buffer []byte) (n int, err error) {
-	return t.source.Read(buffer)
+//ReadFromClient reads data from the source end of the pipe.
+func (t *TLSPipe) ReadFromClient(buffer []byte) (n int, err error) {
+	return t.clientConn.Read(buffer)
 }
 
-//WriteSource writes data to the source end of the pipe. This is typically the proxy-unaware client.
-func (t *TLSPipe) WriteSource(buffer []byte) (n int, err error) {
-	return t.source.Write(buffer)
+//WriteToClient writes data to the client end of the pipe.
+func (t *TLSPipe) WriteToClient(buffer []byte) (n int, err error) {
+	return t.clientConn.Write(buffer)
 }
 
-//ReadDestination reads data from the destination end of the pipe. The destination is the proxy-unaware
-//client's intended destination.
-func (t *TLSPipe) ReadDestination(buffer []byte) (n int, err error) {
-	return t.destination.Read(buffer)
+//ReadFromServer reads data from the server end of the pipe.
+func (t *TLSPipe) ReadFromServer(buffer []byte) (n int, err error) {
+	return t.serverConn.Read(buffer)
 }
 
-//WriteDestination writes data to the destination end of the pipe. The destination is the proxy-unaware
-//client's intended destination.
-func (t *TLSPipe) WriteDestination(buffer []byte) (n int, err error) {
-	return t.destination.Write(buffer)
+//WriteToServer writes data to the server end of the pipe.
+func (t *TLSPipe) WriteToServer(buffer []byte) (n int, err error) {
+	return t.serverConn.Write(buffer)
 }

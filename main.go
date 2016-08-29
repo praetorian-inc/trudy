@@ -127,14 +127,14 @@ func clientHandler(pipe pipe.TrudyPipe, show bool) {
 	buffer := make([]byte, 65535)
 
 	for {
-		bytesRead, err := pipe.ReadSource(buffer)
+		bytesRead, err := pipe.ReadFromClient(buffer)
 		if err != nil {
 			break
 		}
 		data := module.Data{FromClient: true,
 			Bytes:    buffer[:bytesRead],
-			DestAddr: pipe.DestinationInfo(),
-			SrcAddr:  pipe.SourceInfo()}
+			DestAddr: pipe.ServerInfo(), //XXX(kkl): Fix the dest / src thing here.
+			SrcAddr:  pipe.ClientInfo()} //XXX(kkl): Fix the dest / src thing here.
 
 		data.Deserialize()
 
@@ -182,7 +182,7 @@ func clientHandler(pipe pipe.TrudyPipe, show bool) {
 
 		data.Serialize()
 
-		_, err = pipe.WriteDestination(data.Bytes[:bytesRead])
+		_, err = pipe.WriteToServer(data.Bytes[:bytesRead])
 		if err != nil {
 			break
 		}
@@ -193,14 +193,14 @@ func serverHandler(pipe pipe.TrudyPipe) {
 	buffer := make([]byte, 65535)
 
 	for {
-		bytesRead, err := pipe.ReadDestination(buffer)
+		bytesRead, err := pipe.ReadFromServer(buffer)
 		if err != nil {
 			break
 		}
 		data := module.Data{FromClient: false,
 			Bytes:    buffer[:bytesRead],
-			DestAddr: pipe.SourceInfo(),
-			SrcAddr:  pipe.DestinationInfo()}
+			DestAddr: pipe.ClientInfo(), //XXX(kkl): Fix the dest / src thing here.
+			SrcAddr:  pipe.ServerInfo()} //XXX(kkl): Fix the dest / src thing here.
 
 		data.Deserialize()
 
@@ -248,7 +248,7 @@ func serverHandler(pipe pipe.TrudyPipe) {
 
 		data.Serialize()
 
-		_, err = pipe.WriteSource(data.Bytes[:bytesRead])
+		_, err = pipe.WriteToClient(data.Bytes[:bytesRead])
 		if err != nil {
 			break
 		}
