@@ -20,8 +20,8 @@ type Data struct {
 	ClientAddr net.Addr               //ClientAddr is the net.Addr of the client (the device you are proxying)
 }
 
-var startTLSElementSingle string = "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'>"
-var startTLSElementDouble string = "<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">"
+var startTLSElementSingle string = "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>"
+var startTLSElementDouble string = "<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>"
 var proceedElementDouble string = "<proceed xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>"
 var proceedElementSingle string = "<proceed xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>"
 
@@ -36,24 +36,26 @@ func (input Data) DoPrint() bool {
 //a server.
 func (input *Data) AfterWriteToServer(p pipe.TrudyPipe) {
 
-	if input.FromClient && (bytes.Contains(input.Bytes, []byte(startTLSElementDouble)) ||
-		bytes.Contains(input.Bytes, []byte(startTLSElementSingle))) {
+	if bytes.Contains(input.Bytes, []byte(startTLSElementDouble)) ||
+		bytes.Contains(input.Bytes, []byte(startTLSElementSingle)) {
 		//The client has sent StartTLS response to the server's StartTLS
-		//requestion. Trudy will handle that upgrade.
+		//request. Trudy will now handle that upgrade.
 
-		//Tell the client to proceed.
-		p.WriteToClient([]byte(proceedElementDouble))
+		log.Printf("[INFO] ( %v ) Upgrading client-side connection.\n", p.Id())
 		//Upgrade the connection and prepare for a ClientHandshake
+		log.Printf("[INFO] ( %v ) Preparing the client-side connection for a TLS ClientHello\n", p.Id())
 		tlsConn := tls.Server(p.ClientConn(), input.TLSConfig)
-		log.Printf("[INFO] (%v) Upgrading client-side connection.\n", p.Id())
+		//Tell the client to proceed. We will drop the server's real proceed.
+		p.WriteToClient([]byte(proceedElementDouble))
+		log.Printf("[INFO] ( %v ) Sent proceed to client!\n", p.Id())
 		err := tlsConn.Handshake()
 		if err != nil {
-			log.Printf("[ERR] (%v) Failure in upgrading client-side connection: %v\n", p.Id(), err)
+			log.Printf("[ERR] ( %v ) Failure in upgrading client-side connection: %v\n", p.Id(), err)
 			p.Close()
 			return
 		}
 		p.SetClientConn(tlsConn)
-		log.Printf("[INFO] (%v) Succesfully upgraded client-side connection.\n", p.Id())
+		log.Printf("[INFO] ( %v ) Succesfully upgraded client-side connection.\n", p.Id())
 	}
 }
 
@@ -61,38 +63,21 @@ func (input *Data) AfterWriteToServer(p pipe.TrudyPipe) {
 //a client.
 func (input *Data) BeforeWriteToClient(p pipe.TrudyPipe) {
 
-	if !input.FromClient && (bytes.Contains(input.Bytes, []byte(proceedElementDouble)) ||
-		bytes.Contains(input.Bytes, []byte(proceedElementSingle))) {
+	if bytes.Contains(input.Bytes, []byte(proceedElementDouble)) ||
+		bytes.Contains(input.Bytes, []byte(proceedElementSingle)) {
 
 		//We have recieved a proceed from the server. Trudy will
 		//now upgrade the server-side connection.
 
-		tlsConn := tls.Client(p.ServerConn(), input.TLSConfig)
-		log.Printf("[INFO] (%v) Sending handshake to server.\n", p.Id())
-		err := tlsConn.Handshake()
-		if err != nil {
-			log.Printf("[ERR] (%v) Failure in upgrading server-side connection: %v\n", p.Id(), err)
-			p.Close()
-			return
-		}
-		log.Printf("[INFO] (%v) Succesfully upgraded server-side connection\n", p.Id())
+		log.Printf("[INFO] ( %v ) Upgrading server-side connection.\n", p.Id())
+		tlsConfig := tls.Config{InsecureSkipVerify: true}
+		tlsConn := tls.Client(p.ServerConn(), &tlsConfig)
 		p.SetServerConn(tlsConn)
 
 		//Lets drop the proceed message so its not sent to the client. (Since Trudy already sent one)
+		log.Printf("[INFO] ( %v ) Dropping the server's proceed.\n", p.Id())
 		input.Bytes = []byte{}
 	}
-
-}
-
-//AfterWriteToClient is a function that will be called after data is sent to
-//a client.
-func (input *Data) AfterWriteToClient(p pipe.TrudyPipe) {
-
-}
-
-//BeforeWriteToServer is a function that will be called before data is sent to
-//a server.
-func (input *Data) BeforeWriteToServer(p pipe.TrudyPipe) {
 
 }
 
@@ -140,4 +125,16 @@ func (input Data) DoMangle() bool {
 //the pipe.
 func (input Data) Drop() bool {
 	return false
+}
+
+//AfterWriteToClient is a function that will be called after data is sent to
+//a client.
+func (input *Data) AfterWriteToClient(p pipe.TrudyPipe) {
+
+}
+
+//BeforeWriteToServer is a function that will be called before data is sent to
+//a server.
+func (input *Data) BeforeWriteToServer(p pipe.TrudyPipe) {
+
 }
