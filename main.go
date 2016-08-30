@@ -20,6 +20,7 @@ import (
 var connectionCount uint
 var websocketConn *websocket.Conn
 var websocketMutex *sync.Mutex
+var tlsConfig *tls.Config
 
 func main() {
 	var tcpport string
@@ -59,7 +60,7 @@ func setup(tcpport, tlsport, x509, key string, show bool) {
 		log.Printf("There appears to be an error with the x509 or key values specified. See error below.\n%v\n", err.Error())
 		return
 	}
-	config := &tls.Config{
+	tlsConfig = &tls.Config{
 		Certificates:       []tls.Certificate{trdy},
 		InsecureSkipVerify: true,
 	}
@@ -72,7 +73,7 @@ func setup(tcpport, tlsport, x509, key string, show bool) {
 
 	//All good. Start listening.
 	tcpListener.Listen("tcp", tcpAddr, &tls.Config{})
-	tlsListener.Listen("tcp", tlsAddr, config)
+	tlsListener.Listen("tcp", tlsAddr, tlsConfig)
 
 	log.Println("[INFO] Trudy lives!")
 	log.Printf("[INFO] Listening for TLS connections on port %s\n", tlsport)
@@ -134,6 +135,7 @@ func clientHandler(pipe pipe.TrudyPipe, show bool) {
 		}
 		data := module.Data{FromClient: true,
 			Bytes:      buffer[:bytesRead],
+			TLSConfig:  tlsConfig,
 			ServerAddr: pipe.ServerInfo(),
 			ClientAddr: pipe.ClientInfo()}
 
@@ -207,6 +209,7 @@ func serverHandler(pipe pipe.TrudyPipe) {
 		}
 		data := module.Data{FromClient: false,
 			Bytes:      buffer[:bytesRead],
+			TLSConfig:  tlsConfig,
 			ClientAddr: pipe.ClientInfo(),
 			ServerAddr: pipe.ServerInfo()}
 
