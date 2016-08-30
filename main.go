@@ -118,6 +118,7 @@ func errHandler(err error) {
 	}
 }
 
+//clientHandler manages data that is sent from the client to the server.
 func clientHandler(pipe pipe.TrudyPipe, show bool) {
 	if show {
 		defer log.Printf("[INFO] ( %v ) Closing TCP connection.\n", pipe.Id())
@@ -127,8 +128,8 @@ func clientHandler(pipe pipe.TrudyPipe, show bool) {
 	buffer := make([]byte, 65535)
 
 	for {
-		bytesRead, err := pipe.ReadFromClient(buffer)
-		if bytesRead == 0 && readSourceErr != nil {
+		bytesRead, clientReadErr := pipe.ReadFromClient(buffer)
+		if bytesRead == 0 || clientReadErr != io.EOF {
 			break
 		}
 		data := module.Data{FromClient: true,
@@ -182,13 +183,18 @@ func clientHandler(pipe pipe.TrudyPipe, show bool) {
 
 		data.Serialize()
 
-		_, err = pipe.WriteToServer(data.Bytes[:bytesRead])
-		if err != nil || readSourceErr == io.EOF {
+		data.BeforeWriteToServer(&pipe)
+
+		_, serverWriteErr := pipe.WriteToServer(data.Bytes[:bytesRead])
+		if serverWriteErr != nil || clientReadErr == io.EOF {
 			break
 		}
+
+		data.AfterWriteToServer(&pipe)
 	}
 }
 
+//serverHandler manages data that is sent from the server to the client.
 func serverHandler(pipe pipe.TrudyPipe) {
 	buffer := make([]byte, 65535)
 
@@ -250,10 +256,14 @@ func serverHandler(pipe pipe.TrudyPipe) {
 
 		data.Serialize()
 
-		_, clientWriteErr = pipe.WriteToClient(data.Bytes[:bytesRead])
-		if clientWriteErr != nil || readDestErr == io.EOF {
+		data.BeforeWriteToClient(&pipe)
+
+		_, clientWriteErr := pipe.WriteToClient(data.Bytes[:bytesRead])
+		if clientWriteErr != nil || serverReadErr == io.EOF {
 			break
 		}
+
+		data.AfterWriteToClient(&pipe)
 	}
 }
 
