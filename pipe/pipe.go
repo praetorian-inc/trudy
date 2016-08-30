@@ -60,18 +60,18 @@ func (t *TCPPipe) SetServerConn(s net.Conn) {
 }
 
 //Id returns a TCPPipe identifier
-func (t *TCPPipe) Id() uint {
+func (t TCPPipe) Id() uint {
 	return t.id
 }
 
 //ServerInfo returns the net.Addr of the server.
-func (t *TCPPipe) ServerInfo() (addr net.Addr) {
+func (t TCPPipe) ServerInfo() (addr net.Addr) {
 	addr = t.serverConn.RemoteAddr()
 	return
 }
 
 //ClientInfo returns the net.Addr of the client.
-func (t *TCPPipe) ClientInfo() (addr net.Addr) {
+func (t TCPPipe) ClientInfo() (addr net.Addr) {
 	addr = t.clientConn.RemoteAddr()
 	return
 }
@@ -168,7 +168,7 @@ func (t *TLSPipe) SetServerConn(s net.Conn) {
 }
 
 //Id returns a TLSPipe identifier
-func (t *TLSPipe) Id() uint {
+func (t TLSPipe) Id() uint {
 	return t.id
 }
 
@@ -196,13 +196,13 @@ func (t *TLSPipe) New(id uint, fd int, clientConn net.Conn) (err error) {
 }
 
 //ServerInfo returns the net.Addr of the server.
-func (t *TLSPipe) ServerInfo() (addr net.Addr) {
+func (t TLSPipe) ServerInfo() (addr net.Addr) {
 	addr = t.serverConn.RemoteAddr()
 	return
 }
 
 //ClientInfo returns the net.Addr of the client.
-func (t *TLSPipe) ClientInfo() (addr net.Addr) {
+func (t TLSPipe) ClientInfo() (addr net.Addr) {
 	addr = t.clientConn.RemoteAddr()
 	return
 }

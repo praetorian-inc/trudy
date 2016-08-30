@@ -34,7 +34,7 @@ func (input Data) DoPrint() bool {
 
 //BeforeWriteToClient is a function that will be called before data is sent to
 //a client.
-func (input *Data) BeforeWriteToClient(p *pipe.TrudyPipe) {
+func (input *Data) BeforeWriteToClient(p pipe.TrudyPipe) {
 
 	if !input.FromClient && (bytes.Contains(input.Bytes, []byte(proceedElementDouble)) ||
 		bytes.Contains(input.Bytes, []byte(proceedElementSingle))) {
@@ -115,7 +115,7 @@ func (input *Data) BeforeWriteToServer(p pipe.TrudyPipe) {
 
 //AfterWriteToServer is a function that will be called after data is sent to
 //a server.
-func (input *Data) AfterWriteToServer(p *pipe.TrudyPipe) {
+func (input *Data) AfterWriteToServer(p pipe.TrudyPipe) {
 
 }
 
