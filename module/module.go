@@ -9,8 +9,8 @@ import (
 type Data struct {
 	FromClient bool     //FromClient is true is the data sent is coming from the client (the device you are proxying)
 	Bytes      []byte   //Bytes is a byte slice that contians the TCP data
-	ServerAddr net.Addr //DestAddr is net.Addr of the server
-	ClientAddr net.Addr //SrcAddr is the net.Addr of the client (the device you are proxying)
+	ServerAddr net.Addr //ServerAddr is net.Addr of the server
+	ClientAddr net.Addr //ClientAddr is the net.Addr of the client (the device you are proxying)
 }
 
 //DoMangle will return true if Data needs to be sent to the Mangle function.
@@ -18,23 +18,26 @@ func (input Data) DoMangle() bool {
 	return true
 }
 
-//Mangle can modify/replace the Bytes values within the Data struct. This can be empty if no
-//programmatic mangling needs to be done.
+//Mangle can modify/replace the Bytes values within the Data struct. This can
+//be empty if no programmatic mangling needs to be done.
 func (input *Data) Mangle() {
 
 }
 
-//Drop will return true if the Data needs to be dropped before going through the pipe.
+//Drop will return true if the Data needs to be dropped before going through
+//the pipe.
 func (input Data) Drop() bool {
 	return false
 }
 
-//PrettyPrint returns the string representation of the data. This string will be the value that is logged to the console.
+//PrettyPrint returns the string representation of the data. This string will
+//be the value that is logged to the console.
 func (input Data) PrettyPrint() string {
 	return hex.Dump(input.Bytes)
 }
 
-//DoPrint will return true if the PrettyPrinted version of the Data struct needs to be logged to the console.
+//DoPrint will return true if the PrettyPrinted version of the Data struct
+//needs to be logged to the console.
 func (input Data) DoPrint() bool {
 	return true
 }
@@ -50,8 +53,8 @@ func (input *Data) Deserialize() {
 
 }
 
-//Serialize should replace the Data struct's Bytes with the serialized form of the bytes.
-//The serialized bytes will be sent over the wire.
+//Serialize should replace the Data struct's Bytes with the serialized form of
+//the bytes. The serialized bytes will be sent over the wire.
 func (input *Data) Serialize() {
 
 }

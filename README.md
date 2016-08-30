@@ -1,4 +1,4 @@
-##Trudy
+## Trudy
 
 [![asciicast](https://asciinema.org/a/7zkywm0biuz1wa64az3tmox8v.png)](https://asciinema.org/a/7zkywm0biuz1wa64az3tmox8v)
 
@@ -12,10 +12,10 @@ Trudy was designed for monitoring and modifying proxy-unaware devices that use n
 
 Written by Kelby Ludwig ([@kelbyludwig](https://twitter.com/kelbyludwig))
 
-###Why I Built This
+### Why I Built This
 I have done security research that invovled sitting between a embedded device and a server and modifying some custom binary protocol on the fly. This usually is a slow process that involves sniffing legitimate traffic, and then rebuilding packets programmatically. Trudy enables Burp-like features for generalized TCP traffic.
 
-###Simple Setup
+### Simple Setup
 
 0. Configure a virtual machine (Trudy has been tested on a 64-bit Debian 8 VM) to shove all traffic through Trudy. I personally use a Vagrant VM that sets this up for me. The Vagrant VM is available [here](https://github.com/praetorian-inc/mitm-vm). If you would like to use different `--to-ports` values, you can use Trudy's command line flags to change Trudy's listening ports.
 
@@ -31,7 +31,7 @@ I have done security research that invovled sitting between a embedded device an
 
     `sysctl -w net.ipv4.ip_forward=1`
 
-1. Clone the repo on the virutal machine and build the Trudy binary.
+1. Clone the repo on the virtual machine and build the Trudy binary.
 
     `git clone https://github.com/kelbyludwig/trudy.git`
 
