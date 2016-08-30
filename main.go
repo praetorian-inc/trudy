@@ -137,6 +137,7 @@ func clientHandler(pipe pipe.TrudyPipe, show bool) {
 			Bytes:      buffer[:bytesRead],
 			TLSConfig:  tlsConfig,
 			ServerAddr: pipe.ServerInfo(),
+			KV:         make(map[string]interface{}),
 			ClientAddr: pipe.ClientInfo()}
 
 		data.Deserialize()
@@ -185,14 +186,14 @@ func clientHandler(pipe pipe.TrudyPipe, show bool) {
 
 		data.Serialize()
 
-		data.BeforeWriteToServer(&pipe)
+		data.BeforeWriteToServer(pipe)
 
 		_, serverWriteErr := pipe.WriteToServer(data.Bytes[:bytesRead])
 		if serverWriteErr != nil || clientReadErr == io.EOF {
 			break
 		}
 
-		data.AfterWriteToServer(&pipe)
+		data.AfterWriteToServer(pipe)
 	}
 }
 
@@ -210,6 +211,7 @@ func serverHandler(pipe pipe.TrudyPipe) {
 		data := module.Data{FromClient: false,
 			Bytes:      buffer[:bytesRead],
 			TLSConfig:  tlsConfig,
+			KV:         make(map[string]interface{}),
 			ClientAddr: pipe.ClientInfo(),
 			ServerAddr: pipe.ServerInfo()}
 
@@ -259,14 +261,14 @@ func serverHandler(pipe pipe.TrudyPipe) {
 
 		data.Serialize()
 
-		data.BeforeWriteToClient(&pipe)
+		data.BeforeWriteToClient(pipe)
 
 		_, clientWriteErr := pipe.WriteToClient(data.Bytes[:bytesRead])
 		if clientWriteErr != nil || serverReadErr == io.EOF {
 			break
 		}
 
-		data.AfterWriteToClient(&pipe)
+		data.AfterWriteToClient(pipe)
 	}
 }
 
