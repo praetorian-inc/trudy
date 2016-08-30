@@ -127,14 +127,14 @@ func clientHandler(pipe pipe.TrudyPipe, show bool) {
 	buffer := make([]byte, 65535)
 
 	for {
-		bytesRead, err := pipe.ReadSource(buffer)
+		bytesRead, err := pipe.ReadFromClient(buffer)
 		if err != nil {
 			break
 		}
 		data := module.Data{FromClient: true,
-			Bytes:    buffer[:bytesRead],
-			DestAddr: pipe.DestinationInfo(),
-			SrcAddr:  pipe.SourceInfo()}
+			Bytes:      buffer[:bytesRead],
+			ServerAddr: pipe.ServerInfo(),
+			ClientAddr: pipe.ClientInfo()}
 
 		data.Deserialize()
 
@@ -177,12 +177,12 @@ func clientHandler(pipe pipe.TrudyPipe, show bool) {
 		}
 
 		if data.DoPrint() {
-			log.Printf("%v -> %v\n%v\n", data.SrcAddr.String(), data.DestAddr.String(), data.PrettyPrint())
+			log.Printf("%v -> %v\n%v\n", data.ClientAddr.String(), data.ServerAddr.String(), data.PrettyPrint())
 		}
 
 		data.Serialize()
 
-		_, err = pipe.WriteDestination(data.Bytes[:bytesRead])
+		_, err = pipe.WriteToServer(data.Bytes[:bytesRead])
 		if err != nil {
 			break
 		}
@@ -193,14 +193,14 @@ func serverHandler(pipe pipe.TrudyPipe) {
 	buffer := make([]byte, 65535)
 
 	for {
-		bytesRead, err := pipe.ReadDestination(buffer)
+		bytesRead, err := pipe.ReadFromServer(buffer)
 		if err != nil {
 			break
 		}
 		data := module.Data{FromClient: false,
-			Bytes:    buffer[:bytesRead],
-			DestAddr: pipe.SourceInfo(),
-			SrcAddr:  pipe.DestinationInfo()}
+			Bytes:      buffer[:bytesRead],
+			ClientAddr: pipe.ClientInfo(),
+			ServerAddr: pipe.ServerInfo()}
 
 		data.Deserialize()
 
@@ -243,12 +243,12 @@ func serverHandler(pipe pipe.TrudyPipe) {
 		}
 
 		if data.DoPrint() {
-			log.Printf("%v -> %v\n%v\n", data.DestAddr.String(), data.SrcAddr.String(), data.PrettyPrint())
+			log.Printf("%v -> %v\n%v\n", data.ServerAddr.String(), data.ClientAddr.String(), data.PrettyPrint())
 		}
 
 		data.Serialize()
 
-		_, err = pipe.WriteSource(data.Bytes[:bytesRead])
+		_, err = pipe.WriteToClient(data.Bytes[:bytesRead])
 		if err != nil {
 			break
 		}
