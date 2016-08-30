@@ -1,6 +1,6 @@
 ## Trudy
 
-Trudy is a transparent proxy that can modify and drop traffic for arbitrary TCP connections. Trudy can be used to programmatically modify TCP traffic for proxy-unaware clients. Trudy creates a 2-way "pipe" for each connection it proxies. The device you are proxying (the "client") connects to Trudy (but doesn't know this) and Trudy connects to the client's intended destination (the "server"). Traffic is then passed between these pipes. Users can create Go functions to mangle data between pipes.  [ee it in action!](https://asciinema.org/a/7zkywm0biuz1wa64az3tmox8v)
+Trudy is a transparent proxy that can modify and drop traffic for arbitrary TCP connections. Trudy can be used to programmatically modify TCP traffic for proxy-unaware clients. Trudy creates a 2-way "pipe" for each connection it proxies. The device you are proxying (the "client") connects to Trudy (but doesn't know this) and Trudy connects to the client's intended destination (the "server"). Traffic is then passed between these pipes. Users can create Go functions to mangle data between pipes.  [See it in action!](https://asciinema.org/a/7zkywm0biuz1wa64az3tmox8v)
 
 Trudy can also proxy TLS connections. Obviously, you will need a valid certificate or a client that does not validate certificates.
 
