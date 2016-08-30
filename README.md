@@ -52,7 +52,7 @@ I have done security research that involved sitting between a embedded device an
 
 ## Data Flow
 
-Module methods are called in this order. Downward errors indicate a branch if the `Do*` function returns true.
+Module methods are called in this order. Downward arrows indicate a branch if the `Do*` function returns true.
 
 ```
 Deserialize -> Drop -> DoMangle ->  DoIntercept -> DoPrint -> Serialize -> BeforeWriteTo(Server|Client) -> AfterWriteTo(Server|Client)
