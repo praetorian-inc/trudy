@@ -20,8 +20,8 @@ type Data struct {
 	ClientAddr net.Addr               //ClientAddr is the net.Addr of the client (the device you are proxying)
 }
 
-//var startTLSElementSingle string = "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'>"
-//var startTLSElementDouble string = "<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">"
+var startTLSElementSingle string = "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'>"
+var startTLSElementDouble string = "<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">"
 var proceedElementDouble string = "<proceed xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>"
 var proceedElementSingle string = "<proceed xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>"
 
@@ -32,68 +32,43 @@ func (input Data) DoPrint() bool {
 	return strings.Contains(input.ServerAddr.String(), ":5225") || strings.Contains(input.ClientAddr.String(), ":5225")
 }
 
-//BeforeWriteToClient is a function that will be called before data is sent to
-//a client.
-func (input *Data) BeforeWriteToClient(p pipe.TrudyPipe) {
+//AfterWriteToServer is a function that will be called after data is sent to
+//a server.
+func (input *Data) AfterWriteToServer(p pipe.TrudyPipe) {
 
-	if !input.FromClient && (bytes.Contains(input.Bytes, []byte(proceedElementDouble)) ||
-		bytes.Contains(input.Bytes, []byte(proceedElementSingle))) {
-		//The server has sent the client a "proceed" element.  This
-		//means that the client will be upgrading its connection to TLS
-		//now. Lets prepare for this by setting some context for other
-		//module methods. We will also just pass on the proceed to the
-		//client.
-		input.KV["UpgradeClientConnection"] = true
-		input.KV["UpgradeServerConnection"] = true
-	}
+	if input.FromClient && (bytes.Contains(input.Bytes, []byte(startTLSElementDouble)) ||
+		bytes.Contains(input.Bytes, []byte(startTLSElementSingle))) {
+		//The client has sent StartTLS response to the server's StartTLS
+		//requestion. Trudy will handle that upgrade.
 
-}
-
-//AfterWriteToClient is a function that will be called after data is sent to
-//a client.
-func (input *Data) AfterWriteToClient(p pipe.TrudyPipe) {
-
-	upgrade, ok := input.KV["UpgradeClientConnection"].(bool)
-
-	if !ok {
-		return
-	}
-
-	if upgrade {
-		//This code will be hit after a proceed element has been sent
-		//to the client from the server. We are going to intercept the
-		//TLS upgrade for our client-side connection now.
+		//Tell the client to proceed.
+		p.WriteToClient([]byte(proceedElementDouble))
+		//Upgrade the connection and prepare for a ClientHandshake
 		tlsConn := tls.Server(p.ClientConn(), input.TLSConfig)
+		log.Printf("[INFO] (%v) Upgrading client-side connection.\n", p.Id())
 		err := tlsConn.Handshake()
 		if err != nil {
 			log.Printf("[ERR] (%v) Failure in upgrading client-side connection: %v\n", p.Id(), err)
 			p.Close()
 			return
 		}
-		log.Printf("[INFO] (%v) Succesfully upgraded client-side connection\n", p.Id())
 		p.SetClientConn(tlsConn)
-		//We no longer need to upgrade!
-		input.KV["UpgradeClientConnection"] = false
+		log.Printf("[INFO] (%v) Succesfully upgraded client-side connection.\n", p.Id())
 	}
-
 }
 
-//BeforeWriteToServer is a function that will be called before data is sent to
-//a server.
-func (input *Data) BeforeWriteToServer(p pipe.TrudyPipe) {
+//BeforeWriteToClient is a function that will be called before data is sent to
+//a client.
+func (input *Data) BeforeWriteToClient(p pipe.TrudyPipe) {
 
-	upgrade, ok := input.KV["UpgradeServerConnection"].(bool)
+	if !input.FromClient && (bytes.Contains(input.Bytes, []byte(proceedElementDouble)) ||
+		bytes.Contains(input.Bytes, []byte(proceedElementSingle))) {
 
-	if !ok {
-		return
-	}
+		//We have recieved a proceed from the server. Trudy will
+		//now upgrade the server-side connection.
 
-	if upgrade {
-		//This code will be hit after a proceed element has been sent
-		//from the server to the client. Before we start forwarding
-		//data to the server from the client, we need to upgrade
-		//our TCP connection to a TLS connection.
 		tlsConn := tls.Client(p.ServerConn(), input.TLSConfig)
+		log.Printf("[INFO] (%v) Sending handshake to server.\n", p.Id())
 		err := tlsConn.Handshake()
 		if err != nil {
 			log.Printf("[ERR] (%v) Failure in upgrading server-side connection: %v\n", p.Id(), err)
@@ -102,8 +77,22 @@ func (input *Data) BeforeWriteToServer(p pipe.TrudyPipe) {
 		}
 		log.Printf("[INFO] (%v) Succesfully upgraded server-side connection\n", p.Id())
 		p.SetServerConn(tlsConn)
-		input.KV["UpgradeServerConnection"] = false
+
+		//Lets drop the proceed message so its not sent to the client. (Since Trudy already sent one)
+		input.Bytes = []byte{}
 	}
+
+}
+
+//AfterWriteToClient is a function that will be called after data is sent to
+//a client.
+func (input *Data) AfterWriteToClient(p pipe.TrudyPipe) {
+
+}
+
+//BeforeWriteToServer is a function that will be called before data is sent to
+//a server.
+func (input *Data) BeforeWriteToServer(p pipe.TrudyPipe) {
 
 }
 
@@ -112,12 +101,6 @@ func (input *Data) BeforeWriteToServer(p pipe.TrudyPipe) {
 // Unmodified module methods. All methods past this point are using the default implementation.
 //
 //
-
-//AfterWriteToServer is a function that will be called after data is sent to
-//a server.
-func (input *Data) AfterWriteToServer(p pipe.TrudyPipe) {
-
-}
 
 //DoIntercept returns true if data should be sent to the Trudy interceptor.
 func (input Data) DoIntercept() bool {
