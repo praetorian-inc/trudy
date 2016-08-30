@@ -193,6 +193,7 @@ func clientHandler(pipe pipe.TrudyPipe, show bool) {
 		data.Serialize()
 
 		data.BeforeWriteToServer(pipe)
+		bytesRead = len(data.Bytes)
 
 		_, serverWriteErr := pipe.WriteToServer(data.Bytes[:bytesRead])
 		if serverWriteErr != nil || clientReadErr == io.EOF {
@@ -274,6 +275,7 @@ func serverHandler(pipe pipe.TrudyPipe) {
 		data.Serialize()
 
 		data.BeforeWriteToClient(pipe)
+		bytesRead = len(data.Bytes)
 
 		_, clientWriteErr := pipe.WriteToClient(data.Bytes[:bytesRead])
 		if clientWriteErr != nil || serverReadErr == io.EOF {
