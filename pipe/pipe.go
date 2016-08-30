@@ -27,6 +27,10 @@ type TrudyPipe interface {
 	WriteToServer(buffer []byte) (n int, err error)
 	ServerInfo() (addr net.Addr)
 	ClientInfo() (addr net.Addr)
+	ServerConn() net.Conn
+	ClientConn() net.Conn
+	SetServerConn(net.Conn)
+	SetClientConn(net.Conn)
 	New(uint, int, net.Conn) (err error)
 	Close()
 	Id() uint
@@ -37,6 +41,22 @@ type TCPPipe struct {
 	id         uint
 	serverConn net.Conn
 	clientConn net.Conn
+}
+
+func (t TCPPipe) ClientConn() net.Conn {
+	return t.clientConn
+}
+
+func (t TCPPipe) ServerConn() net.Conn {
+	return t.serverConn
+}
+
+func (t *TCPPipe) SetClientConn(c net.Conn) {
+	t.clientConn = c
+}
+
+func (t *TCPPipe) SetServerConn(s net.Conn) {
+	t.serverConn = s
 }
 
 //Id returns a TCPPipe identifier
@@ -129,6 +149,22 @@ type TLSPipe struct {
 	id         uint
 	serverConn net.Conn
 	clientConn net.Conn
+}
+
+func (t TLSPipe) ClientConn() net.Conn {
+	return t.clientConn
+}
+
+func (t TLSPipe) ServerConn() net.Conn {
+	return t.serverConn
+}
+
+func (t *TLSPipe) SetClientConn(c net.Conn) {
+	t.clientConn = c
+}
+
+func (t *TLSPipe) SetServerConn(s net.Conn) {
+	t.serverConn = s
 }
 
 //Id returns a TLSPipe identifier
