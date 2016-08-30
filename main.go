@@ -128,7 +128,7 @@ func clientHandler(pipe pipe.TrudyPipe, show bool) {
 
 	for {
 		bytesRead, err := pipe.ReadFromClient(buffer)
-		if err != nil {
+		if bytesRead == 0 && readSourceErr != nil {
 			break
 		}
 		data := module.Data{FromClient: true,
@@ -183,7 +183,7 @@ func clientHandler(pipe pipe.TrudyPipe, show bool) {
 		data.Serialize()
 
 		_, err = pipe.WriteToServer(data.Bytes[:bytesRead])
-		if err != nil {
+		if err != nil || readSourceErr == io.EOF {
 			break
 		}
 	}
@@ -192,9 +192,11 @@ func clientHandler(pipe pipe.TrudyPipe, show bool) {
 func serverHandler(pipe pipe.TrudyPipe) {
 	buffer := make([]byte, 65535)
 
+	defer pipe.Close()
+
 	for {
-		bytesRead, err := pipe.ReadFromServer(buffer)
-		if err != nil {
+		bytesRead, serverReadErr := pipe.ReadFromServer(buffer)
+		if bytesRead == 0 || serverReadErr != io.EOF {
 			break
 		}
 		data := module.Data{FromClient: false,
@@ -248,8 +250,8 @@ func serverHandler(pipe pipe.TrudyPipe) {
 
 		data.Serialize()
 
-		_, err = pipe.WriteToClient(data.Bytes[:bytesRead])
-		if err != nil {
+		_, clientWriteErr = pipe.WriteToClient(data.Bytes[:bytesRead])
+		if clientWriteErr != nil || readDestErr == io.EOF {
 			break
 		}
 	}
