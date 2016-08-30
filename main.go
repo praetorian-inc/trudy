@@ -131,7 +131,7 @@ func clientHandler(pipe pipe.TrudyPipe, show bool) {
 	for {
 		bytesRead, clientReadErr := pipe.ReadFromClient(buffer)
 
-		if clientReadErr != io.EOF {
+		if clientReadErr != io.EOF && clientReadErr != nil {
 			break
 		}
 
@@ -212,7 +212,7 @@ func serverHandler(pipe pipe.TrudyPipe) {
 	for {
 		bytesRead, serverReadErr := pipe.ReadFromServer(buffer)
 
-		if serverReadErr != io.EOF {
+		if serverReadErr != io.EOF && serverReadErr != nil {
 			break
 		}
 
