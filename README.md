@@ -57,5 +57,5 @@ Module methods are called in this order. Downward errors indicate a branch if th
 ```
 Deserialize -> Drop -> DoMangle ->  DoIntercept -> DoPrint -> Serialize -> BeforeWriteTo(Server|Client) -> AfterWriteTo(Server|Client)
                          |         /                |        /
-		         |_> Mangle                 |_> PrettyPrint
+                         |_> Mangle                 |_> PrettyPrint
 ```
