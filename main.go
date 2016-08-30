@@ -130,9 +130,15 @@ func clientHandler(pipe pipe.TrudyPipe, show bool) {
 
 	for {
 		bytesRead, clientReadErr := pipe.ReadFromClient(buffer)
-		if bytesRead == 0 || clientReadErr != io.EOF {
+
+		if clientReadErr != io.EOF {
 			break
 		}
+
+		if bytesRead == 0 {
+			continue
+		}
+
 		data := module.Data{FromClient: true,
 			Bytes:      buffer[:bytesRead],
 			TLSConfig:  tlsConfig,
@@ -205,9 +211,15 @@ func serverHandler(pipe pipe.TrudyPipe) {
 
 	for {
 		bytesRead, serverReadErr := pipe.ReadFromServer(buffer)
-		if bytesRead == 0 || serverReadErr != io.EOF {
+
+		if serverReadErr != io.EOF {
 			break
 		}
+
+		if bytesRead == 0 {
+			continue
+		}
+
 		data := module.Data{FromClient: false,
 			Bytes:      buffer[:bytesRead],
 			TLSConfig:  tlsConfig,
