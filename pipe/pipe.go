@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"strconv"
+	"sync"
 	"syscall"
 	"time"
 )
@@ -34,6 +35,11 @@ type TrudyPipe interface {
 	New(uint, int, net.Conn) (err error)
 	Close()
 	Id() uint
+	Lock()
+	Unlock()
+	AddContext(key string, value interface{})
+	GetContext(key string) (value interface{}, ok bool)
+	DeleteContext(key string)
 }
 
 //TCPPipe implements the TrudyPipe interface and can be used to proxy generic TCP connections.
@@ -41,6 +47,29 @@ type TCPPipe struct {
 	id         uint
 	serverConn net.Conn
 	clientConn net.Conn
+	pipeMutex  *sync.Mutex
+	KV         map[string]interface{}
+}
+
+func (t TCPPipe) Lock() {
+	t.pipeMutex.Lock()
+}
+
+func (t TCPPipe) Unlock() {
+	t.pipeMutex.Unlock()
+}
+
+func (t *TCPPipe) AddContext(key string, value interface{}) {
+	t.KV[key] = value
+}
+
+func (t *TCPPipe) GetContext(key string) (retval interface{}, ok bool) {
+	retval, ok = t.KV[key]
+	return
+}
+
+func (t *TCPPipe) DeleteContext(key string) {
+	delete(t.KV, key)
 }
 
 func (t TCPPipe) ClientConn() net.Conn {
@@ -149,6 +178,29 @@ type TLSPipe struct {
 	id         uint
 	serverConn net.Conn
 	clientConn net.Conn
+	pipeMutex  *sync.Mutex
+	KV         map[string]interface{}
+}
+
+func (t TLSPipe) Lock() {
+	t.pipeMutex.Lock()
+}
+
+func (t TLSPipe) Unlock() {
+	t.pipeMutex.Unlock()
+}
+
+func (t *TLSPipe) AddContext(key string, value interface{}) {
+	t.KV[key] = value
+}
+
+func (t *TLSPipe) GetContext(key string) (retval interface{}, ok bool) {
+	retval, ok = t.KV[key]
+	return
+}
+
+func (t *TLSPipe) DeleteContext(key string) {
+	delete(t.KV, key)
 }
 
 func (t TLSPipe) ClientConn() net.Conn {
