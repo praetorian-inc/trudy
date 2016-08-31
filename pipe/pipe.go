@@ -171,7 +171,6 @@ func (t *TCPPipe) New(id uint, fd int, clientConn net.Conn) (err error) {
 	if err != nil {
 		log.Printf("[ERR] Unable to connect to destination. Closing pipe.\n", id)
 		clientConn.Close()
-		serverConn.Close()
 		return err
 	}
 	t.id = id
@@ -258,7 +257,6 @@ func (t *TLSPipe) New(id uint, fd int, clientConn net.Conn) (err error) {
 	if err != nil {
 		log.Printf("[ERR] Unable to connect to destination. Closing connection %v.\n", id)
 		clientConn.Close()
-		serverConn.Close()
 		return err
 	}
 	t.id = id
