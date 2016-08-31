@@ -48,19 +48,22 @@ type TCPPipe struct {
 	serverConn net.Conn
 	clientConn net.Conn
 	pipeMutex  *sync.Mutex
+	userMutex  *sync.Mutex
 	KV         map[string]interface{}
 }
 
 func (t TCPPipe) Lock() {
-	t.pipeMutex.Lock()
+	t.userMutex.Lock()
 }
 
 func (t TCPPipe) Unlock() {
-	t.pipeMutex.Unlock()
+	t.userMutex.Unlock()
 }
 
 func (t *TCPPipe) AddContext(key string, value interface{}) {
+	t.pipeMutex.Lock()
 	t.KV[key] = value
+	t.pipeMutex.Unlock()
 }
 
 func (t *TCPPipe) GetContext(key string) (retval interface{}, ok bool) {
@@ -69,7 +72,9 @@ func (t *TCPPipe) GetContext(key string) (retval interface{}, ok bool) {
 }
 
 func (t *TCPPipe) DeleteContext(key string) {
+	t.pipeMutex.Lock()
 	delete(t.KV, key)
+	t.pipeMutex.Unlock()
 }
 
 func (t TCPPipe) ClientConn() net.Conn {
@@ -81,11 +86,15 @@ func (t TCPPipe) ServerConn() net.Conn {
 }
 
 func (t *TCPPipe) SetClientConn(c net.Conn) {
+	t.pipeMutex.Lock()
 	t.clientConn = c
+	t.pipeMutex.Unlock()
 }
 
 func (t *TCPPipe) SetServerConn(s net.Conn) {
+	t.pipeMutex.Lock()
 	t.serverConn = s
+	t.pipeMutex.Unlock()
 }
 
 //Id returns a TCPPipe identifier
@@ -168,6 +177,8 @@ func (t *TCPPipe) New(id uint, fd int, clientConn net.Conn) (err error) {
 	t.id = id
 	t.clientConn = clientConn
 	t.serverConn = serverConn
+	t.pipeMutex = new(sync.Mutex)
+	t.userMutex = new(sync.Mutex)
 	return nil
 }
 
@@ -179,19 +190,22 @@ type TLSPipe struct {
 	serverConn net.Conn
 	clientConn net.Conn
 	pipeMutex  *sync.Mutex
+	userMutex  *sync.Mutex
 	KV         map[string]interface{}
 }
 
 func (t TLSPipe) Lock() {
-	t.pipeMutex.Lock()
+	t.userMutex.Lock()
 }
 
 func (t TLSPipe) Unlock() {
-	t.pipeMutex.Unlock()
+	t.userMutex.Unlock()
 }
 
 func (t *TLSPipe) AddContext(key string, value interface{}) {
+	t.pipeMutex.Lock()
 	t.KV[key] = value
+	t.pipeMutex.Unlock()
 }
 
 func (t *TLSPipe) GetContext(key string) (retval interface{}, ok bool) {
@@ -200,7 +214,9 @@ func (t *TLSPipe) GetContext(key string) (retval interface{}, ok bool) {
 }
 
 func (t *TLSPipe) DeleteContext(key string) {
+	t.pipeMutex.Lock()
 	delete(t.KV, key)
+	t.pipeMutex.Unlock()
 }
 
 func (t TLSPipe) ClientConn() net.Conn {
@@ -212,11 +228,15 @@ func (t TLSPipe) ServerConn() net.Conn {
 }
 
 func (t *TLSPipe) SetClientConn(c net.Conn) {
+	t.pipeMutex.Lock()
 	t.clientConn = c
+	t.pipeMutex.Unlock()
 }
 
 func (t *TLSPipe) SetServerConn(s net.Conn) {
+	t.pipeMutex.Lock()
 	t.serverConn = s
+	t.pipeMutex.Unlock()
 }
 
 //Id returns a TLSPipe identifier
@@ -244,6 +264,8 @@ func (t *TLSPipe) New(id uint, fd int, clientConn net.Conn) (err error) {
 	t.id = id
 	t.clientConn = clientConn
 	t.serverConn = serverConn
+	t.pipeMutex = new(sync.Mutex)
+	t.userMutex = new(sync.Mutex)
 	return nil
 }
 

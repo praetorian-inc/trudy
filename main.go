@@ -143,7 +143,6 @@ func clientHandler(pipe pipe.TrudyPipe, show bool) {
 			Bytes:      buffer[:bytesRead],
 			TLSConfig:  tlsConfig,
 			ServerAddr: pipe.ServerInfo(),
-			KV:         make(map[string]interface{}),
 			ClientAddr: pipe.ClientInfo()}
 
 		data.Deserialize()
@@ -224,7 +223,6 @@ func serverHandler(pipe pipe.TrudyPipe) {
 		data := module.Data{FromClient: false,
 			Bytes:      buffer[:bytesRead],
 			TLSConfig:  tlsConfig,
-			KV:         make(map[string]interface{}),
 			ClientAddr: pipe.ClientInfo(),
 			ServerAddr: pipe.ServerInfo()}
 

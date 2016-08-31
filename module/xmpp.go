@@ -12,12 +12,11 @@ import (
 
 //Data is a wrapper that provides metadata that may be useful when mangling bytes on the network.
 type Data struct {
-	FromClient bool                   //FromClient is true is the data sent is coming from the client (the device you are proxying)
-	KV         map[string]interface{} //KV is a map that can be used to pass data between different module calls.
-	Bytes      []byte                 //Bytes is a byte slice that contians the TCP data
-	TLSConfig  *tls.Config            //TLSConfig is a TLS server config that contains Trudy's TLS server certficiate.
-	ServerAddr net.Addr               //ServerAddr is net.Addr of the server
-	ClientAddr net.Addr               //ClientAddr is the net.Addr of the client (the device you are proxying)
+	FromClient bool        //FromClient is true is the data sent is coming from the client (the device you are proxying)
+	Bytes      []byte      //Bytes is a byte slice that contians the TCP data
+	TLSConfig  *tls.Config //TLSConfig is a TLS server config that contains Trudy's TLS server certficiate.
+	ServerAddr net.Addr    //ServerAddr is net.Addr of the server
+	ClientAddr net.Addr    //ClientAddr is the net.Addr of the client (the device you are proxying)
 }
 
 var startTLSElementSingle string = "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>"
@@ -41,21 +40,19 @@ func (input *Data) AfterWriteToServer(p pipe.TrudyPipe) {
 		//The client has sent StartTLS response to the server's StartTLS
 		//request. Trudy will now handle that upgrade.
 
-		log.Printf("[INFO] ( %v ) Upgrading client-side connection.\n", p.Id())
 		//Upgrade the connection and prepare for a ClientHandshake
-		log.Printf("[INFO] ( %v ) Preparing the client-side connection for a TLS ClientHello\n", p.Id())
 		tlsConn := tls.Server(p.ClientConn(), input.TLSConfig)
 		//Tell the client to proceed. We will drop the server's real proceed.
 		p.WriteToClient([]byte(proceedElementDouble))
-		log.Printf("[INFO] ( %v ) Sent proceed to client!\n", p.Id())
+		//Lock this pipe until the server-side TLS upgrade has completed.
+		p.Lock()
+		p.Lock()
 		err := tlsConn.Handshake()
 		if err != nil {
-			log.Printf("[ERR] ( %v ) Failure in upgrading client-side connection: %v\n", p.Id(), err)
 			p.Close()
 			return
 		}
 		p.SetClientConn(tlsConn)
-		log.Printf("[INFO] ( %v ) Succesfully upgraded client-side connection.\n", p.Id())
 	}
 }
 
@@ -77,6 +74,8 @@ func (input *Data) BeforeWriteToClient(p pipe.TrudyPipe) {
 		//Lets drop the proceed message so its not sent to the client. (Since Trudy already sent one)
 		log.Printf("[INFO] ( %v ) Dropping the server's proceed.\n", p.Id())
 		input.Bytes = []byte{}
+		p.Unlock()
+		p.Unlock()
 	}
 
 }
