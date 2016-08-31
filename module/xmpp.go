@@ -53,6 +53,7 @@ func (input *Data) AfterWriteToServer(p pipe.TrudyPipe) {
 			return
 		}
 		p.SetClientConn(tlsConn)
+		p.Unlock()
 	}
 }
 
@@ -74,7 +75,6 @@ func (input *Data) BeforeWriteToClient(p pipe.TrudyPipe) {
 		//Lets drop the proceed message so its not sent to the client. (Since Trudy already sent one)
 		log.Printf("[INFO] ( %v ) Dropping the server's proceed.\n", p.Id())
 		input.Bytes = []byte{}
-		p.Unlock()
 		p.Unlock()
 	}
 
