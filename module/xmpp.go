@@ -33,33 +33,45 @@ func (input Data) DoPrint() bool {
 
 //AfterWriteToServer is a function that will be called after data is sent to
 //a server.
-func (input *Data) AfterWriteToServer(p pipe.TrudyPipe) {
+func (input *Data) AfterWriteToServer(p pipe.Pipe) {
 
 	if bytes.Contains(input.Bytes, []byte(startTLSElementDouble)) ||
 		bytes.Contains(input.Bytes, []byte(startTLSElementSingle)) {
 		//The client has sent StartTLS response to the server's StartTLS
 		//request. Trudy will now handle that upgrade.
 
+		log.Printf("[INFO] ( %v ) Upgrading client-side connection.\n", p.Id())
+
 		//Upgrade the connection and prepare for a ClientHandshake
 		tlsConn := tls.Server(p.ClientConn(), input.TLSConfig)
+
 		//Tell the client to proceed. We will drop the server's real proceed.
 		p.WriteToClient([]byte(proceedElementDouble))
+		log.Printf("[INFO] ( %v ) Sent client a proceed. Now locking own goroutine to allow server-side upgrade.\n", p.Id())
+
 		//Lock this pipe until the server-side TLS upgrade has completed.
+		p.Lock() //TODO(kkl): This is kinda hacky. I think a chan will be better here.
 		p.Lock()
-		p.Lock()
+
+		//Once this code has been reached, the server-side TLS
+		//connection has been upgraded. The client-side can now proceed
+		//with a TLS upgrade.
 		err := tlsConn.Handshake()
 		if err != nil {
 			p.Close()
 			return
 		}
+		//Update the client-side connection with the new TLS connection
+		//and unlock the pipe.
 		p.SetClientConn(tlsConn)
 		p.Unlock()
+		log.Printf("[INFO] ( %v ) Upgraded client-side connection.\n", p.Id())
 	}
 }
 
 //BeforeWriteToClient is a function that will be called before data is sent to
 //a client.
-func (input *Data) BeforeWriteToClient(p pipe.TrudyPipe) {
+func (input *Data) BeforeWriteToClient(p pipe.Pipe) {
 
 	if bytes.Contains(input.Bytes, []byte(proceedElementDouble)) ||
 		bytes.Contains(input.Bytes, []byte(proceedElementSingle)) {
@@ -76,6 +88,7 @@ func (input *Data) BeforeWriteToClient(p pipe.TrudyPipe) {
 		log.Printf("[INFO] ( %v ) Dropping the server's proceed.\n", p.Id())
 		input.Bytes = []byte{}
 		p.Unlock()
+		log.Printf("[INFO] ( %v ) Upgraded server-side connection.\n", p.Id())
 	}
 
 }
@@ -128,12 +141,12 @@ func (input Data) Drop() bool {
 
 //AfterWriteToClient is a function that will be called after data is sent to
 //a client.
-func (input *Data) AfterWriteToClient(p pipe.TrudyPipe) {
+func (input *Data) AfterWriteToClient(p pipe.Pipe) {
 
 }
 
 //BeforeWriteToServer is a function that will be called before data is sent to
 //a server.
-func (input *Data) BeforeWriteToServer(p pipe.TrudyPipe) {
+func (input *Data) BeforeWriteToServer(p pipe.Pipe) {
 
 }

@@ -92,14 +92,14 @@ func connectionDispatcher(listener listener.TrudyListener, name string, show boo
 		if err != nil {
 			continue
 		}
-		var p pipe.TrudyPipe
+
+		p := new(pipe.TrudyPipe)
 		if name == "TLS" {
-			p = new(pipe.TLSPipe)
-			err = p.New(connectionCount, fd, conn)
+			err = p.New(connectionCount, fd, conn, true)
 		} else {
-			p = new(pipe.TCPPipe)
-			err = p.New(connectionCount, fd, conn)
+			err = p.New(connectionCount, fd, conn, false)
 		}
+
 		if err != nil {
 			log.Println("[ERR] Error creating new pipe.")
 			continue
@@ -120,7 +120,7 @@ func errHandler(err error) {
 }
 
 //clientHandler manages data that is sent from the client to the server.
-func clientHandler(pipe pipe.TrudyPipe, show bool) {
+func clientHandler(pipe pipe.Pipe, show bool) {
 	if show {
 		defer log.Printf("[INFO] ( %v ) Closing TCP connection.\n", pipe.Id())
 	}
@@ -204,7 +204,7 @@ func clientHandler(pipe pipe.TrudyPipe, show bool) {
 }
 
 //serverHandler manages data that is sent from the server to the client.
-func serverHandler(pipe pipe.TrudyPipe) {
+func serverHandler(pipe pipe.Pipe) {
 	buffer := make([]byte, 65535)
 
 	defer pipe.Close()
