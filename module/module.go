@@ -1,6 +1,7 @@
 package module
 
 import (
+	"crypto/tls"
 	"encoding/hex"
 	"github.com/praetorian-inc/trudy/pipe"
 	"net"
@@ -8,10 +9,11 @@ import (
 
 //Data is a thin wrapper that provides metadata that may be useful when mangling bytes on the network.
 type Data struct {
-	FromClient bool     //FromClient is true is the data sent is coming from the client (the device you are proxying)
-	Bytes      []byte   //Bytes is a byte slice that contians the TCP data
-	ServerAddr net.Addr //ServerAddr is net.Addr of the server
-	ClientAddr net.Addr //ClientAddr is the net.Addr of the client (the device you are proxying)
+	FromClient bool        //FromClient is true is the data sent is coming from the client (the device you are proxying)
+	Bytes      []byte      //Bytes is a byte slice that contians the TCP data
+	TLSConfig  *tls.Config //TLSConfig is a TLS server config that contains Trudy's TLS server certficiate.
+	ServerAddr net.Addr    //ServerAddr is net.Addr of the server
+	ClientAddr net.Addr    //ClientAddr is the net.Addr of the client (the device you are proxying)
 }
 
 //DoMangle will return true if Data needs to be sent to the Mangle function.

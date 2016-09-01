@@ -20,6 +20,7 @@ import (
 var connectionCount uint
 var websocketConn *websocket.Conn
 var websocketMutex *sync.Mutex
+var tlsConfig *tls.Config
 
 func main() {
 	var tcpport string
@@ -59,7 +60,7 @@ func setup(tcpport, tlsport, x509, key string, show bool) {
 		log.Printf("There appears to be an error with the x509 or key values specified. See error below.\n%v\n", err.Error())
 		return
 	}
-	config := &tls.Config{
+	tlsConfig = &tls.Config{
 		Certificates:       []tls.Certificate{trdy},
 		InsecureSkipVerify: true,
 	}
@@ -72,7 +73,7 @@ func setup(tcpport, tlsport, x509, key string, show bool) {
 
 	//All good. Start listening.
 	tcpListener.Listen("tcp", tcpAddr, &tls.Config{})
-	tlsListener.Listen("tcp", tlsAddr, config)
+	tlsListener.Listen("tcp", tlsAddr, tlsConfig)
 
 	log.Println("[INFO] Trudy lives!")
 	log.Printf("[INFO] Listening for TLS connections on port %s\n", tlsport)
@@ -91,14 +92,14 @@ func connectionDispatcher(listener listener.TrudyListener, name string, show boo
 		if err != nil {
 			continue
 		}
-		var p pipe.TrudyPipe
+
+		p := new(pipe.TrudyPipe)
 		if name == "TLS" {
-			p = new(pipe.TLSPipe)
-			err = p.New(connectionCount, fd, conn)
+			err = p.New(connectionCount, fd, conn, true)
 		} else {
-			p = new(pipe.TCPPipe)
-			err = p.New(connectionCount, fd, conn)
+			err = p.New(connectionCount, fd, conn, false)
 		}
+
 		if err != nil {
 			log.Println("[ERR] Error creating new pipe.")
 			continue
@@ -119,7 +120,7 @@ func errHandler(err error) {
 }
 
 //clientHandler manages data that is sent from the client to the server.
-func clientHandler(pipe pipe.TrudyPipe, show bool) {
+func clientHandler(pipe pipe.Pipe, show bool) {
 	if show {
 		defer log.Printf("[INFO] ( %v ) Closing TCP connection.\n", pipe.Id())
 	}
@@ -129,11 +130,18 @@ func clientHandler(pipe pipe.TrudyPipe, show bool) {
 
 	for {
 		bytesRead, clientReadErr := pipe.ReadFromClient(buffer)
-		if bytesRead == 0 || clientReadErr != io.EOF {
+
+		if clientReadErr != io.EOF && clientReadErr != nil {
 			break
 		}
+
+		if bytesRead == 0 {
+			continue
+		}
+
 		data := module.Data{FromClient: true,
 			Bytes:      buffer[:bytesRead],
+			TLSConfig:  tlsConfig,
 			ServerAddr: pipe.ServerInfo(),
 			ClientAddr: pipe.ClientInfo()}
 
@@ -183,7 +191,7 @@ func clientHandler(pipe pipe.TrudyPipe, show bool) {
 
 		data.Serialize()
 
-		data.BeforeWriteToServer(&pipe)
+		data.BeforeWriteToServer(pipe)
 		bytesRead = len(data.Bytes)
 
 		_, serverWriteErr := pipe.WriteToServer(data.Bytes[:bytesRead])
@@ -191,23 +199,30 @@ func clientHandler(pipe pipe.TrudyPipe, show bool) {
 			break
 		}
 
-		data.AfterWriteToServer(&pipe)
+		data.AfterWriteToServer(pipe)
 	}
 }
 
 //serverHandler manages data that is sent from the server to the client.
-func serverHandler(pipe pipe.TrudyPipe) {
+func serverHandler(pipe pipe.Pipe) {
 	buffer := make([]byte, 65535)
 
 	defer pipe.Close()
 
 	for {
 		bytesRead, serverReadErr := pipe.ReadFromServer(buffer)
-		if bytesRead == 0 || serverReadErr != io.EOF {
+
+		if serverReadErr != io.EOF && serverReadErr != nil {
 			break
 		}
+
+		if bytesRead == 0 {
+			continue
+		}
+
 		data := module.Data{FromClient: false,
 			Bytes:      buffer[:bytesRead],
+			TLSConfig:  tlsConfig,
 			ClientAddr: pipe.ClientInfo(),
 			ServerAddr: pipe.ServerInfo()}
 
@@ -257,7 +272,7 @@ func serverHandler(pipe pipe.TrudyPipe) {
 
 		data.Serialize()
 
-		data.BeforeWriteToClient(&pipe)
+		data.BeforeWriteToClient(pipe)
 		bytesRead = len(data.Bytes)
 
 		_, clientWriteErr := pipe.WriteToClient(data.Bytes[:bytesRead])
@@ -265,7 +280,7 @@ func serverHandler(pipe pipe.TrudyPipe) {
 			break
 		}
 
-		data.AfterWriteToClient(&pipe)
+		data.AfterWriteToClient(pipe)
 	}
 }
 
