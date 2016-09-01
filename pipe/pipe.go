@@ -259,7 +259,7 @@ func (t *TrudyPipe) New(id uint, fd int, clientConn net.Conn, useTLS bool) (err 
 	} else {
 		serverConn, err = net.Dial("tcp", byteToConnString(originalAddrBytes.Multiaddr))
 		if err != nil {
-			log.Printf("[ERR] Unable to connect to destination. Closing pipe.\n", id)
+			log.Printf("[ERR] ( %v ) Unable to connect to destination. Closing pipe.\n", id)
 			clientConn.Close()
 			return err
 		}
