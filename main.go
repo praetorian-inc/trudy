@@ -135,7 +135,7 @@ func clientHandler(pipe pipe.Pipe, show bool) {
 			break
 		}
 
-		if bytesRead == 0 {
+		if clientReadErr != io.EOF && bytesRead == 0 {
 			continue
 		}
 
@@ -216,7 +216,7 @@ func serverHandler(pipe pipe.Pipe) {
 			break
 		}
 
-		if bytesRead == 0 {
+		if serverReadErr != io.EOF && bytesRead == 0 {
 			continue
 		}
 
