@@ -199,15 +199,23 @@ func (t *TrudyPipe) Close() {
 //ReadFromClient reads data from the client end of the pipe. This is typically the proxy-unaware client.
 func (t *TrudyPipe) ReadFromClient(buffer []byte) (n int, err error) {
 	//TODO(kkl): Make timeouts configureable.
-	t.clientConn.SetReadDeadline(time.Now().Add(15 * time.Second))
-	return t.clientConn.Read(buffer)
+	err = t.clientConn.SetReadDeadline(time.Now().Add(15 * time.Second))
+	if err != nil {
+		return
+	}
+	n, err = t.clientConn.Read(buffer)
+	return
 }
 
 //WriteToClient writes data to the client end of the pipe. This is typically the proxy-unaware client.
 func (t *TrudyPipe) WriteToClient(buffer []byte) (n int, err error) {
 	//TODO(kkl): Make timeouts configureable.
-	t.clientConn.SetWriteDeadline(time.Now().Add(15 * time.Second))
-	return t.clientConn.Write(buffer)
+	err = t.clientConn.SetWriteDeadline(time.Now().Add(15 * time.Second))
+	if err != nil {
+		return
+	}
+	n, err = t.clientConn.Write(buffer)
+	return
 }
 
 //ReadFromServer reads data from the server end of the pipe. The server is the
@@ -220,8 +228,12 @@ func (t *TrudyPipe) ReadFromServer(buffer []byte) (n int, err error) {
 //WriteToServer writes data to the server end of the pipe. The server is the
 //proxy-unaware client's intended destination.
 func (t *TrudyPipe) WriteToServer(buffer []byte) (n int, err error) {
-	t.serverConn.SetWriteDeadline(time.Now().Add(15 * time.Second))
-	return t.serverConn.Write(buffer)
+	err = t.serverConn.SetWriteDeadline(time.Now().Add(15 * time.Second))
+	if err != nil {
+		return
+	}
+	n, err = t.serverConn.Write(buffer)
+	return
 }
 
 //byteToConnString converts the Multiaddr bytestring returned by Getsockopt into a "host:port" connection string.
@@ -237,7 +249,7 @@ func byteToConnString(multiaddr [16]byte) string {
 //New builds a new TrudyPipe. New will get the original destination of traffic
 //that was mangled by iptables and get the original destination. New will then
 //open a connection to that original destination and, upon success, will set
-//all the internalf values needed for a TrudyPipe.
+//all the internal values needed for a TrudyPipe.
 func (t *TrudyPipe) New(id uint, fd int, clientConn net.Conn, useTLS bool) (err error) {
 	//TODO(kkl): Make the second argument system-dependent. E.g. If a linux machine: syscall.SOL_IP
 	originalAddrBytes, err := syscall.GetsockoptIPv6Mreq(fd, syscall.IPPROTO_IP, SO_ORIGINAL_DST)
