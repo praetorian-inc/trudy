@@ -40,8 +40,14 @@ func (tl *TCPListener) Accept() (fd int, conn net.Conn, err error) {
 		return
 	}
 	file, err := cpointer.File()
+	if err != nil {
+		return
+	}
 	fd = int(file.Fd())
 	conn, err = net.FileConn(file)
+	if err != nil {
+		return
+	}
 	return
 }
 
@@ -61,8 +67,14 @@ func (tl *TLSListener) Accept() (fd int, conn net.Conn, err error) {
 		return
 	}
 	file, err := cpointer.File()
+	if err != nil {
+		return
+	}
 	fd = int(file.Fd())
 	fconn, err := net.FileConn(file)
+	if err != nil {
+		return
+	}
 	conn = tls.Server(fconn, tl.Config)
 	return
 }
