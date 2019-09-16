@@ -25,6 +25,7 @@ var tlsConfig *tls.Config
 func main() {
 	var tcpport string
 	var tlsport string
+	var webport string
 
 	var x509 string
 	var key string
@@ -33,6 +34,7 @@ func main() {
 
 	flag.StringVar(&tcpport, "tcp", "6666", "Listening port for non-TLS connections.")
 	flag.StringVar(&tlsport, "tls", "6443", "Listening port for TLS connections.")
+	flag.StringVar(&webport, "web", "8080", "Listening port for Web connections.")
 	flag.StringVar(&x509, "x509", "./certificate/trudy.cer", "Path to x509 certificate that will be presented for TLS connection.")
 	flag.StringVar(&key, "key", "./certificate/trudy.key", "Path to the corresponding private key for the specified x509 certificate")
 	flag.BoolVar(&showConnectionAttempts, "show", true, "Show connection open and close messages")
@@ -41,10 +43,11 @@ func main() {
 
 	tcpport = ":" + tcpport
 	tlsport = ":" + tlsport
-	setup(tcpport, tlsport, x509, key, showConnectionAttempts)
+	webport = ":" + webport
+	setup(tcpport, tlsport, webport, x509, key, showConnectionAttempts)
 }
 
-func setup(tcpport, tlsport, x509, key string, show bool) {
+func setup(tcpport, tlsport, webport, x509, key string, show bool) {
 
 	//Setup non-TLS TCP listener!
 	tcpAddr, err := net.ResolveTCPAddr("tcp", tcpport)
@@ -79,7 +82,9 @@ func setup(tcpport, tlsport, x509, key string, show bool) {
 	log.Printf("[INFO] Listening for TLS connections on port %s\n", tlsport)
 	log.Printf("[INFO] Listening for all other TCP connections on port %s\n", tcpport)
 
-	go websocketHandler()
+	go websocketHandler(webport)
+	log.Printf("[INFO] Listening for Web connections on port %s\n", webport)
+	
 	go connectionDispatcher(tlsListener, "TLS", show)
 	connectionDispatcher(tcpListener, "TCP", show)
 
@@ -284,7 +289,7 @@ func serverHandler(pipe pipe.Pipe) {
 	}
 }
 
-func websocketHandler() {
+func websocketHandler(webport string) {
 	websocketMutex = &sync.Mutex{}
 	upgrader := websocket.Upgrader{ReadBufferSize: 65535, WriteBufferSize: 65535}
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -298,7 +303,7 @@ func websocketHandler() {
 			return
 		}
 	})
-	err := http.ListenAndServe(":8080", nil)
+	err := http.ListenAndServe(webport, nil)
 	if err != nil {
 		panic(err)
 	}
